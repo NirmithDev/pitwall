@@ -1,6 +1,6 @@
 # Current automated checks
 
-## Playwright: 12 browser scenarios
+## Playwright: 15 browser scenarios
 
 | Area | Coverage |
 | --- | --- |
@@ -15,6 +15,7 @@
 | Persistence | Saved camera/display settings survive reload and remain isolated by race |
 | Storage failures | Damaged JSON falls back to defaults; saving failures leave playback usable |
 | Mobile | Replay/library/map settings stay within a 390-pixel viewport |
+| Themes | Light/dark switching, first-visit system preference, persistence across reload/races, mobile dialogs, and blocked preference storage |
 
 These scenarios run against the production frontend build in Chromium. Historical import transitions/outages are mocked so tests do not depend on the external provider. Cached replay data and bookmark CRUD use the C# API. Each Playwright test receives an isolated browser context.
 
