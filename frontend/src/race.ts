@@ -30,6 +30,21 @@ export interface RaceEvent {
 }
 export interface Race {
   id: string;
+  schemaVersion?: number;
+  locations?: {
+    version: number;
+    intervalMs: number;
+    maxInterpolationGapMs: number;
+    description: string;
+    traces: {
+      driver: number;
+      samples: [number, number, number][];
+      rawCount: number;
+      rejected: number;
+      coverage: number;
+      gaps: [number, number][];
+    }[];
+  };
   sessionKey?: number;
   kind?: string;
   countryCode?: string;

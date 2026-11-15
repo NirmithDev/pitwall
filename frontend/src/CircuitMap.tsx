@@ -9,7 +9,8 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { pointOnTrack } from "./race";
+import { markerPosition } from "./locations";
+import type { MarkerPosition, PositionSource } from "./locations";
 import type { DriverState, Race } from "./race";
 import {
   DEFAULT_CAMERA,
@@ -27,15 +28,29 @@ export default function CircuitMap({
   standings,
   focused,
   comparison,
+  elapsed,
   onSelect,
 }: {
   race: Race;
   standings: DriverState[];
   focused: DriverState;
   comparison: number | null;
+  elapsed: number;
   onSelect: (driver: number) => void;
 }) {
   const drivers = race.drivers.map((d) => d.number);
+  const recordedAvailable = !!race.locations?.traces.some(
+    (t) => t.samples.length > 1,
+  );
+  const [source, setSource] = useState<PositionSource>(
+    recordedAvailable ? "recorded" : "lap",
+  );
+  const positions = new Map(
+    standings.map((state) => [
+      state.driver.number,
+      markerPosition(race, state, elapsed, source),
+    ]),
+  );
   const [layout, setLayout] = useState<MapLayout>(() =>
     readLayout(race.id, drivers),
   );
@@ -53,10 +68,14 @@ export default function CircuitMap({
     camera: Camera;
     units: number;
   } | null>(null);
-  const point = pointOnTrack(race.track, focused.progress);
-  const effective = following
-    ? normalizeCamera({ ...layout.camera, cx: point[0], cy: point[1] })
-    : layout.camera;
+  const focusedPosition = positions.get(focused.driver.number)!;
+  const lastPoint = useRef<[number, number] | null>(null);
+  if (focusedPosition.point) lastPoint.current = focusedPosition.point;
+  const point = focusedPosition.point ?? lastPoint.current;
+  const effective =
+    following && point
+      ? normalizeCamera({ ...layout.camera, cx: point[0], cy: point[1] })
+      : layout.camera;
   const currentCamera = useRef(effective);
   currentCamera.current = effective;
   const path = race.track.length
@@ -159,8 +178,48 @@ export default function CircuitMap({
       );
     }
   }
+  const located = layout.visible.filter(
+    (number) => positions.get(number)?.point,
+  ).length;
   return (
     <div className="interactive-map">
+      <div className="position-source-bar">
+        <label>
+          Position source
+          <select
+            aria-label="Position source"
+            value={source}
+            onChange={(e) => {
+              setLayout((l) => ({ ...l, camera: currentCamera.current }));
+              setSource(e.target.value as PositionSource);
+              setFollowing(false);
+              lastPoint.current = null;
+            }}
+          >
+            <option value="recorded" disabled={!recordedAvailable}>
+              Recorded positions{recordedAvailable ? "" : " · unavailable"}
+            </option>
+            <option value="lap">Lap estimate</option>
+          </select>
+        </label>
+        <span
+          data-testid="location-status"
+          className={
+            source === "recorded" && !focusedPosition.point
+              ? "location-gap"
+              : ""
+          }
+        >
+          {focused.driver.code}:{" "}
+          {source === "lap"
+            ? "lap estimate"
+            : focusedPosition.status === "recorded"
+              ? "recorded sample"
+              : focusedPosition.status === "smoothed"
+                ? "between recorded samples"
+                : "location gap"}
+        </span>
+      </div>
       <div className="map-toolbar">
         <div className="camera-tools">
           <button
@@ -192,6 +251,9 @@ export default function CircuitMap({
           <button
             className={`map-follow ${following ? "active" : ""}`}
             aria-label="Follow selected driver"
+            disabled={
+              !following && source === "recorded" && !focusedPosition.point
+            }
             aria-pressed={following}
             onClick={follow}
           >
@@ -292,7 +354,7 @@ export default function CircuitMap({
           className="track-svg controllable-map"
           role="img"
           tabIndex={0}
-          aria-label={`${race.circuit} circuit with interpolated driver markers`}
+          aria-label={`${race.circuit} circuit with ${source === "recorded" ? "approximate recorded positions" : "lap-based driver estimates"}`}
           data-testid="circuit-map"
           onPointerDown={(event) => {
             if (
@@ -470,7 +532,7 @@ export default function CircuitMap({
               <CarMarker
                 key={s.driver.number}
                 state={s}
-                track={race.track}
+                position={positions.get(s.driver.number)!}
                 zoom={effective.zoom}
                 selected={false}
                 compared={s.driver.number === comparison}
@@ -484,7 +546,7 @@ export default function CircuitMap({
           {visible.has(focused.driver.number) && (
             <CarMarker
               state={focused}
-              track={race.track}
+              position={focusedPosition}
               zoom={effective.zoom}
               selected
               compared={false}
@@ -498,7 +560,11 @@ export default function CircuitMap({
         </div>
       </div>
       <div className="map-layout-footer">
-        <span>Interpolated movement · {layout.visible.length} visible</span>
+        <span>
+          {source === "recorded"
+            ? `Recorded positions · ${located} / ${layout.visible.length} located`
+            : `Lap estimate · ${layout.visible.length} visible`}
+        </span>
         <button className="save-layout" onClick={save}>
           {dirty ? <Save size={12} /> : <Check size={12} />} Save layout
         </button>
@@ -513,7 +579,7 @@ export default function CircuitMap({
 }
 function CarMarker({
   state,
-  track,
+  position,
   zoom,
   selected,
   compared,
@@ -521,20 +587,21 @@ function CarMarker({
   onSelect,
 }: {
   state: DriverState;
-  track: [number, number][];
+  position: MarkerPosition;
   zoom: number;
   selected: boolean;
   compared: boolean;
   label: boolean;
   onSelect: () => void;
 }) {
-  if (!track.length) return null;
-  const [x, y] = pointOnTrack(track, state.progress);
+  if (!position.point) return null;
+  const [x, y] = position.point;
   return (
     <g
       data-driver={state.driver.number}
+      data-position-source={position.status}
       transform={`translate(${x},${y}) scale(${1 / zoom})`}
-      opacity={state.missing ? 0.35 : 1}
+      opacity={position.status === "estimated" && state.missing ? 0.35 : 1}
       className="car-marker"
       role="button"
       tabIndex={0}

@@ -9,7 +9,7 @@ An independent motorsport replay prototype built with React, TypeScript, ASP.NET
 - Bundled Monza 2024 and Interlagos 2026 replays. Other sessions import on demand and persist in PostgreSQL.
 - Play/pause, 1×–50× playback, timeline scrubbing, lap jumps, and keyboard controls.
 - Driver focus, last-lap comparisons, and clickable tyre-strategy strips.
-- Original SVG circuit outline with lap-time-based marker interpolation.
+- Original SVG circuit outline, recorded-position playback for the Monza 2024 pilot, and explicitly labeled lap estimates for other sessions.
 - Interactive circuit map: zoom, drag to pan, selected-driver follow mode, driver visibility, labels/grid controls, and browser-saved layouts per race.
 - Light/dark themes with a header toggle, system preference on first visit, and a browser-saved choice across races.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.
@@ -99,7 +99,17 @@ Import a specific session manually with `node scripts/import-race.mjs --session 
 
 The bundled snapshots were imported from [OpenF1](https://openf1.org/): session **9590** (Monza, 1 September 2024) and **11412** (Interlagos, 8 November 2026). Routine builds and automated tests do not query the provider. Live imports and catalog refreshes require network access.
 
-Lap times, classification messages, stints, and race-control messages are recorded data. **Car movement is interpolated uniformly along a circuit outline using lap duration. It is not GPS playback.** It cannot show true braking points, corner speeds, or on-track separation. The outline comes from one recorded lap's coordinates.
+Lap times, classification messages, stints, and race-control messages are recorded data. The circuit outline comes from one recorded lap's coordinates.
+
+### Recorded-position pilot: Monza 2024
+
+**Position source** defaults to recorded mode for Monza. Its 20 driver traces contain about 91,000 retained coordinates, using the same UTC origin and spatial projection as the race clock and outline. We retain at most one provider sample per second and linearly smooth between neighboring samples only when they are at most 2.5 seconds apart. Binary search supports playback and seeking in either direction.
+
+OpenF1 describes its locations as approximate. These are not lane-accurate GPS, and the visualization does not establish exact braking points or physical separation. Missing drivers, out-of-frame/invalid samples, and long gaps do not silently become lap estimates: recorded markers disappear and the selected driver's status says **location gap**. Follow mode cannot start without a usable selected-driver location; it holds its previous camera position during a later gap.
+
+**Lap estimate** remains an explicit alternative. It moves markers uniformly around the outline using lap duration, and is the default for races without recorded traces. Switching source does not seek the replay. The selected source currently resets to the race's available default when reopening it; saved map layouts still contain only camera/display preferences.
+
+To rebuild the pilot, run `node scripts/import-race.mjs --session 9590 --locations`, then rebuild/restart the API. This intentionally downloads each driver's historical location feed and caches raw location responses under ignored `.cache/provider/` files so interrupted CLI imports can resume. Routine library imports remain timing-only for this first pilot. Bundled payload revisions upgrade older PostgreSQL replays without deleting bookmarks. JSON responses are compressed for playback delivery.
 
 Classification messages arrive asynchronously and may temporarily repeat positions; ties use lap progress. Missing timed laps can pause a marker. Last-lap comparisons may compare different lap numbers. The strategy strip deliberately reveals full-race stints.
 

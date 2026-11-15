@@ -437,6 +437,7 @@ function App() {
               standings={standings}
               focused={focused}
               comparison={comparison}
+              elapsed={elapsed}
               onSelect={(number) => {
                 setSelected(number);
                 if (comparison === number) setComparison(null);
@@ -860,20 +861,21 @@ function App() {
               {race.date}).
             </p>
             <p>
-              The circuit outline uses coordinates from one recorded lap.{" "}
-              <strong>
-                Car markers move uniformly around that outline using each
-                driver's lap time.
-              </strong>{" "}
-              They do not show GPS positions, braking, corner speed, or measured
-              on-track separation.
+              The circuit outline uses coordinates from one recorded lap. Use{" "}
+              <strong>Position source</strong> to choose recorded positions when
+              available, or the lap estimate. OpenF1 coordinates are
+              approximate, not lane-accurate GPS. Recorded mode smooths between
+              retained samples only when they are at most 2.5 seconds apart;
+              markers disappear where coverage is missing. Lap estimate moves
+              uniformly using lap duration and is not measured on-track
+              separation.
             </p>
             <p>
               Classification follows the latest recorded position messages.
               Messages can arrive at different times; temporary ties are ordered
-              by lap progress. Missing timed laps can cause a marker to pause.
-              “Last-lap difference” compares each driver’s most recent completed
-              lap, which may be different lap numbers.
+              by lap progress. In lap-estimate mode, missing timed laps can
+              pause a marker. “Last-lap difference” compares each driver’s most
+              recent completed lap, which may be different lap numbers.
             </p>
             <p>
               The tyre strategy strip intentionally shows the full race,

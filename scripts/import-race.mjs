@@ -1,13 +1,30 @@
 // Shared CLI/worker for historical OpenF1 ingestion. No API keys or npm packages.
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+let locationCache = false;
 export const sessionId = (key) =>
   Number(key) === 9590 ? "monza-2024" : `session-${key}`;
 async function get(endpoint, query = {}) {
   const url = new URL(`https://api.openf1.org/v1/${endpoint}`);
   for (const [key, value] of Object.entries(query))
     url.searchParams.set(key, String(value));
+  const cacheFile =
+    locationCache && endpoint === "location"
+      ? new URL(
+          `../.cache/provider/${createHash("sha256").update(url.href).digest("hex")}.json`,
+          import.meta.url,
+        )
+      : null;
+  if (cacheFile) {
+    try {
+      const cached = JSON.parse(await readFile(cacheFile, "utf8"));
+      if (Array.isArray(cached)) return cached;
+    } catch {
+      /* Fetch when no complete raw cache is available. */
+    }
+  }
   for (let attempt = 0; attempt < 4; attempt++) {
     const response = await fetch(url, { signal: AbortSignal.timeout(90000) });
     if (response.ok) {
@@ -15,6 +32,10 @@ async function get(endpoint, query = {}) {
       await sleep(2300);
       if (!Array.isArray(data))
         throw new Error(`${endpoint}: unexpected response`);
+      if (cacheFile) {
+        await mkdir(new URL("./", cacheFile), { recursive: true });
+        await writeFile(cacheFile, JSON.stringify(data));
+      }
       return data;
     }
     if (response.status !== 429 && response.status < 500)
@@ -64,7 +85,68 @@ export async function fetchCatalog() {
     );
   return { refreshedAt: new Date().toISOString(), sessions };
 }
-export async function importRace(sessionKey) {
+export function sampleLocations(
+  raw,
+  projection,
+  startMs,
+  durationMs,
+  intervalMs = 1000,
+) {
+  const samples = [];
+  let previousBucket = -Infinity,
+    rejected = 0;
+  const ordered = raw
+    .map((p) => ({ ...p, time: Date.parse(p.date) - startMs }))
+    .filter((p) => Number.isFinite(p.time))
+    .sort((a, b) => a.time - b.time);
+  for (const point of ordered) {
+    if (point.time < -2500 || point.time > durationMs + 2500) continue;
+    if (
+      !Number.isFinite(point.x) ||
+      !Number.isFinite(point.y) ||
+      (point.x === 0 && point.y === 0)
+    ) {
+      rejected++;
+      continue;
+    }
+    const x =
+      (point.x - projection.minX) * projection.scale + projection.offsetX;
+    const y =
+      (projection.maxY - point.y) * projection.scale + projection.offsetY;
+    if (x < 0 || x > 800 || y < 0 || y > 520) {
+      rejected++;
+      continue;
+    }
+    const bucket = Math.floor(point.time / intervalMs);
+    if (bucket === previousBucket) continue;
+    samples.push([
+      Math.round(point.time),
+      Math.round(x * 10) / 10,
+      Math.round(y * 10) / 10,
+    ]);
+    previousBucket = bucket;
+  }
+  let coveredMs = 0;
+  const gaps = [];
+  for (let i = 1; i < samples.length; i++) {
+    const from = samples[i - 1][0],
+      to = samples[i][0];
+    if (to - from <= 2500)
+      coveredMs += Math.max(0, Math.min(durationMs, to) - Math.max(0, from));
+    else gaps.push([Math.max(0, from), Math.min(durationMs, to)]);
+  }
+  return {
+    samples,
+    rawCount: raw.length,
+    rejected,
+    coverage: Math.round((coveredMs / durationMs) * 1000) / 10,
+    gaps,
+  };
+}
+export async function importRace(
+  sessionKey,
+  { includeLocations = false } = {},
+) {
   if (!Number.isSafeInteger(sessionKey) || sessionKey <= 0)
     throw new Error("Invalid session key");
   const query = { session_key: sessionKey };
@@ -105,7 +187,8 @@ export async function importRace(sessionKey) {
   const positionsRaw = await get("position", query),
     stintsRaw = await get("stints", query),
     controlRaw = await get("race_control", query);
-  let track = [];
+  let track = [],
+    projection = null;
   const probes = valid
     .filter((l) => l.lap_number >= 3 && !l.is_pit_out_lap)
     .filter(
@@ -140,6 +223,13 @@ export async function importRace(sessionKey) {
       maxY = Math.max(...ys);
     if (maxX - minX < 1 || maxY - minY < 1) continue;
     const scale = Math.min(660 / (maxX - minX), 420 / (maxY - minY));
+    projection = {
+      minX,
+      maxY,
+      scale,
+      offsetX: (800 - (maxX - minX) * scale) / 2,
+      offsetY: (520 - (maxY - minY) * scale) / 2,
+    };
     track = coords.map(([x, y]) => [
       Math.round((x - minX) * scale + (800 - (maxX - minX) * scale) / 2),
       Math.round((maxY - y) * scale + (520 - (maxY - minY) * scale) / 2),
@@ -188,8 +278,48 @@ export async function importRace(sessionKey) {
     }))
     .sort((a, b) => a.time - b.time);
   const meta = normalizeCatalog([session])[0];
+  let locations;
+  if (includeLocations) {
+    if (!projection)
+      throw new Error(
+        "Cannot align recorded locations without a valid circuit projection.",
+      );
+    const traces = [];
+    for (const driver of rawDrivers) {
+      if (!process.argv.includes("--worker"))
+        console.error(
+          `Recorded locations: ${driver.name_acronym ?? driver.driver_number}`,
+        );
+      const raw = await get("location", {
+        ...query,
+        driver_number: driver.driver_number,
+        "date>": new Date(startMs - 2500).toISOString(),
+        "date<": new Date(startMs + duration * 1000 + 2500).toISOString(),
+      });
+      traces.push({
+        driver: driver.driver_number,
+        ...sampleLocations(
+          raw.filter((p) => p.driver_number === driver.driver_number),
+          projection,
+          startMs,
+          duration * 1000,
+        ),
+      });
+    }
+    if (!traces.some((t) => t.samples.length > 1))
+      throw new Error("No usable recorded locations were returned.");
+    locations = {
+      version: 1,
+      intervalMs: 1000,
+      maxInterpolationGapMs: 2500,
+      description:
+        "Approximate provider coordinates, sampled to at most one point per second; smoothed only between nearby recorded samples.",
+      traces,
+    };
+  }
   return {
     ...meta,
+    schemaVersion: includeLocations ? 2 : 1,
     totalLaps,
     duration,
     startTime: new Date(startMs).toISOString(),
@@ -199,9 +329,11 @@ export async function importRace(sessionKey) {
       url: "https://openf1.org/",
       importedAt: new Date().toISOString(),
       mode: "historical",
-      mapNote: track.length
-        ? "Circuit outline from one recorded lap. Car movement interpolated from lap timing; not GPS playback."
-        : "Circuit coordinates unavailable for this session; timing remains available.",
+      mapNote: locations
+        ? "Approximate recorded positions. Smoothing between samples only; gaps over 2.5 seconds are hidden."
+        : track.length
+          ? "Circuit outline from one recorded lap. Car movement interpolated from lap timing; not GPS playback."
+          : "Circuit coordinates unavailable for this session; timing remains available.",
     },
     drivers: rawDrivers.map((d) => ({
       number: d.driver_number,
@@ -218,6 +350,7 @@ export async function importRace(sessionKey) {
     stints,
     events,
     track,
+    ...(locations ? { locations } : {}),
   };
 }
 if (
@@ -229,9 +362,12 @@ if (
       worker = args.includes("--worker"),
       catalog = args.includes("--catalog"),
       index = args.indexOf("--session");
+    locationCache = args.includes("--locations") && !worker;
     const data = catalog
       ? await fetchCatalog()
-      : await importRace(index >= 0 ? Number(args[index + 1]) : 9590);
+      : await importRace(index >= 0 ? Number(args[index + 1]) : 9590, {
+          includeLocations: args.includes("--locations"),
+        });
     if (worker) process.stdout.write(JSON.stringify(data));
     else {
       const folder = new URL("../data/", import.meta.url);
