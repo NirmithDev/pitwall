@@ -695,7 +695,7 @@ function App() {
               type="range"
               min="0"
               max={race.duration}
-              step="0.1"
+              step="any"
               value={elapsed}
               onChange={(e) => seek(Number(e.target.value))}
               style={
