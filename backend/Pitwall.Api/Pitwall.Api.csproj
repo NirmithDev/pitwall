@@ -3,4 +3,5 @@
   <ItemGroup><PackageReference Include="Npgsql" Version="10.0.0" /></ItemGroup>
   <ItemGroup><Content Include="../../data/*.json" Link="Data/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup>
   <ItemGroup><Content Include="Migrations/*.sql" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup>
+  <ItemGroup><Content Include="../../scripts/import-race.mjs" Link="DataTools/import-race.mjs" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup>
 </Project>
