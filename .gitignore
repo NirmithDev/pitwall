@@ -1,0 +1,15 @@
+node_modules/
+dist/
+bin/
+obj/
+.env
+.env.*
+!.env.example
+*.user
+*.log
+playwright-report/
+test-results/
+.vs/
+.idea/
+.cache/
+*.tsbuildinfo

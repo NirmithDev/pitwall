@@ -1,0 +1,28 @@
+{
+  "name": "pitwall-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --configLoader native --host 127.0.0.1",
+    "build": "tsc -b && vite build --configLoader native",
+    "test": "vitest run --configLoader native --exclude e2e/**",
+    "test:e2e": "playwright test",
+    "preview": "vite preview --configLoader native --host 127.0.0.1"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "lucide-react": "^0.468.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.0"
+  }
+}
