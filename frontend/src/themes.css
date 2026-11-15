@@ -1,0 +1,356 @@
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #354053;
+  border-radius: 5px;
+  background: #182130;
+  color: #c0cede;
+  padding: 8px 10px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  color: #1e2d43;
+  background: #f3f6fb;
+  --muted: #52657d;
+  --line: #d5deea;
+  --red: #d63d32;
+  --panel: #fff;
+}
+[data-theme="light"] .topbar {
+  background: #fff;
+}
+[data-theme="light"] .theme-toggle {
+  background: #f0f4fa;
+  border-color: #cad6e6;
+  color: #304865;
+}
+[data-theme="light"] .race-header p,
+[data-theme="light"] .eyebrow,
+[data-theme="light"] .product-label,
+[data-theme="light"] .historical,
+[data-theme="light"] .race-facts span,
+[data-theme="light"] .race-facts small,
+[data-theme="light"] .session-description,
+[data-theme="light"] .storage-status,
+[data-theme="light"] .panel-heading > .mono,
+[data-theme="light"] .table-heading,
+[data-theme="light"] .driver-name small,
+[data-theme="light"] .position,
+[data-theme="light"] .panel-footnote,
+[data-theme="light"] .tiny-label,
+[data-theme="light"] .track-caption,
+[data-theme="light"] .map-gesture-hint,
+[data-theme="light"] .map-layout-footer,
+[data-theme="light"] .circuit-bottom,
+[data-theme="light"] .focus-name > div > span,
+[data-theme="light"] .focus-name small,
+[data-theme="light"] .focus-stats span,
+[data-theme="light"] .compare-label,
+[data-theme="light"] .tyre-detail small,
+[data-theme="light"] .comparison,
+[data-theme="light"] .strategy-bottom,
+[data-theme="light"] footer {
+  color: #586c85;
+}
+[data-theme="light"] .country-chip,
+[data-theme="light"] .beta {
+  border-color: #c3d0e2;
+  color: #4b617e;
+}
+[data-theme="light"] .icon-button {
+  color: #536a87;
+}
+[data-theme="light"] .icon-button:hover {
+  background: #e7eef8;
+  color: #152d4d;
+}
+[data-theme="light"] .library-bar {
+  background: linear-gradient(100deg, #fff, #eaf0f8);
+  border-color: #cbd7e8;
+}
+[data-theme="light"] .library-count,
+[data-theme="light"] .library-bar > div,
+[data-theme="light"] .library-latest {
+  color: #425e80;
+}
+[data-theme="light"] .save-button,
+[data-theme="light"] .save-layout {
+  background: #eaf0f9;
+  border-color: #bdcde3;
+  color: #24456f;
+}
+[data-theme="light"] .driver-row {
+  border-color: #edf1f7;
+}
+[data-theme="light"] .driver-row:hover {
+  background: #eef4fc;
+}
+[data-theme="light"] .driver-row.selected {
+  background: #fff0eb;
+}
+[data-theme="light"] .lap-time,
+[data-theme="light"] .panel-heading > .mono b,
+[data-theme="light"] .circuit-bottom strong,
+[data-theme="light"] .comparison strong {
+  color: #2e4666;
+}
+[data-theme="light"] .tyre[title="HARD"] {
+  color: #52627b !important;
+}
+[data-theme="light"] .circuit-panel {
+  background: linear-gradient(145deg, #f9fbff, #edf2f8);
+}
+[data-theme="light"] .circuit-topline,
+[data-theme="light"] .circuit-topline > .mono,
+[data-theme="light"] .circuit-actions > .mono,
+[data-theme="light"] .camera-tools output {
+  color: #536d90;
+}
+[data-theme="light"] .map-toolbar,
+[data-theme="light"] .map-layout-footer,
+[data-theme="light"] .map-settings,
+[data-theme="light"] .map-display-options {
+  border-color: #ced9e8;
+}
+[data-theme="light"] .map-settings {
+  background: #edf3fb;
+}
+[data-theme="light"] .map-follow,
+[data-theme="light"] .map-settings-toggle,
+[data-theme="light"] .map-settings-top button {
+  background: #e3ecf8;
+  border-color: #bbcde5;
+  color: #36577f;
+}
+[data-theme="light"] .map-follow.active,
+[data-theme="light"] .map-settings-toggle.active {
+  background: #ffebe5;
+  border-color: #d28d80;
+  color: #9c3028;
+}
+[data-theme="light"] .map-settings-top,
+[data-theme="light"] .map-driver-options label,
+[data-theme="light"] .map-display-options label {
+  color: #435f82;
+}
+[data-theme="light"] .map-display-options select {
+  background: #fff;
+  border-color: #bdcee5;
+  color: #304c72;
+}
+[data-theme="light"] .text-button {
+  color: #4f6a90;
+}
+[data-theme="light"] .map-message {
+  background: #e2f4ec;
+  color: #25654a;
+}
+[data-theme="light"] .controllable-map > rect {
+  fill: #eff4fa;
+}
+[data-theme="light"] .controllable-map > rect[fill="url(#map-grid)"] {
+  fill: url(#map-grid);
+}
+[data-theme="light"] #map-grid circle {
+  fill: #b4c2d5;
+}
+[data-theme="light"] .controllable-map > path:nth-of-type(1) {
+  stroke: #7e8fa7;
+  opacity: 0.14;
+}
+[data-theme="light"] .controllable-map > path:nth-of-type(2) {
+  stroke: #a2b0c4;
+}
+[data-theme="light"] .controllable-map > path:nth-of-type(3) {
+  stroke: #dbe3ee;
+}
+[data-theme="light"] .controllable-map > path:nth-of-type(4) {
+  stroke: #798ca7;
+}
+[data-theme="light"] .controllable-map > text,
+[data-theme="light"] .controllable-map > g:not([data-driver]) text {
+  fill: #536d90;
+}
+[data-theme="light"] .controllable-map > g:not([data-driver]) path {
+  stroke: #3f5677;
+}
+[data-theme="light"] [data-driver] > circle:last-of-type {
+  stroke: #4b6385;
+}
+[data-theme="light"] [data-driver] rect {
+  fill: #fff;
+}
+[data-theme="light"] [data-driver] text {
+  fill: #243e60;
+}
+[data-theme="light"] .driver-focus select {
+  background: #f1f5fb;
+  border-color: #c4d1e3;
+  color: #2e486d;
+}
+[data-theme="light"] .tyre-detail > svg {
+  color: #7285a1;
+}
+[data-theme="light"] .moments-tabs > button {
+  color: #576e8d;
+}
+[data-theme="light"] .moments-tabs > button.active {
+  color: #243f64;
+}
+[data-theme="light"] .moments-tabs button span {
+  background: #e4edf9;
+  color: #526b90;
+}
+[data-theme="light"] .moment,
+[data-theme="light"] .bookmark-row {
+  border-color: #e0e7f1;
+}
+[data-theme="light"] .moment p,
+[data-theme="light"] .bookmark-row > button:first-child {
+  color: #3c5577;
+}
+[data-theme="light"] .moment .mono,
+[data-theme="light"] .bookmark-row .mono,
+[data-theme="light"] .empty-state p,
+[data-theme="light"] .empty-state small,
+[data-theme="light"] .event-mark {
+  color: #5b7597;
+}
+[data-theme="light"] .empty-state > svg {
+  color: #8a9eba;
+}
+[data-theme="light"] .speed-select select {
+  background: #edf3fb;
+  border-color: #c0d0e6;
+  color: #304e76;
+}
+[data-theme="light"] .time-display {
+  color: #2b466e;
+}
+[data-theme="light"] .time-display small,
+[data-theme="light"] .lap-ticks > button {
+  color: #5a7598;
+}
+[data-theme="light"] .scrubber {
+  background: linear-gradient(
+    to right,
+    var(--red) 0%,
+    var(--red) var(--progress),
+    #c3d1e4 var(--progress),
+    #c3d1e4 100%
+  );
+}
+[data-theme="light"] .strategy-driver {
+  background: #e3edf9;
+  color: #3c5b85;
+}
+[data-theme="light"] .stint-row > .mono {
+  color: #345075;
+}
+[data-theme="light"] .stint-bars {
+  background: #dae4f2;
+}
+[data-theme="light"] .stint-bars > button {
+  border-top: 1px solid #bfccdc;
+  border-bottom: 1px solid #bfccdc;
+}
+[data-theme="light"] footer a {
+  color: #3f608b;
+}
+[data-theme="light"] .modal-backdrop {
+  background: #d8e2f0cc;
+}
+[data-theme="light"] .info-modal,
+[data-theme="light"] .library-modal {
+  background: #f8fbff;
+  border-color: #b8cbe4;
+  box-shadow: 0 20px 80px #28426233;
+}
+[data-theme="light"] .info-modal p,
+[data-theme="light"] .keyboard-hints,
+[data-theme="light"] .info-modal .info-meta {
+  color: #506b8d;
+}
+[data-theme="light"] .info-modal strong {
+  color: #203d65;
+}
+[data-theme="light"] kbd {
+  background: #fff;
+  border-color: #bacce4;
+  color: #375881;
+}
+[data-theme="light"] .library-header,
+[data-theme="light"] .library-filters,
+[data-theme="light"] .library-footer {
+  border-color: #cbd8e9;
+}
+[data-theme="light"] .library-header p,
+[data-theme="light"] .library-footer {
+  color: #506d93;
+}
+[data-theme="light"] .library-search,
+[data-theme="light"] .library-filters select,
+[data-theme="light"] .refresh-button {
+  background: #fff;
+  border-color: #c0cfe4;
+  color: #3c5c85;
+}
+[data-theme="light"] .library-search input {
+  color: #263f62;
+}
+[data-theme="light"] .race-card {
+  background: linear-gradient(145deg, #fff, #edf3fb);
+  border-color: #c3d2e7;
+}
+[data-theme="light"] .race-card.current {
+  background: linear-gradient(145deg, #fff1e9, #fffaf5);
+  border-color: #cb796b;
+}
+[data-theme="light"] .race-card-top,
+[data-theme="light"] .race-card p,
+[data-theme="light"] .race-card-bottom {
+  color: #58749a;
+}
+[data-theme="light"] .race-card-bottom {
+  border-color: #d0dcee;
+}
+[data-theme="light"] .race-card-bottom span {
+  color: #355b89;
+}
+[data-theme="light"] .latest-badge {
+  background: #fbe2db;
+  color: #9e3b2f;
+}
+[data-theme="light"] .cached-badge {
+  color: #327251;
+}
+[data-theme="light"] .import-status,
+[data-theme="light"] .toast {
+  background: #e0f3e9;
+  border-color: #8cbea5;
+  color: #246548;
+}
+[data-theme="light"] .library-error {
+  background: #ffe8e2;
+  color: #953b30;
+}
+[data-theme="light"] .load-screen p {
+  color: #506d93;
+}
+@media (max-width: 760px) {
+  .theme-toggle {
+    width: 31px;
+    height: 31px;
+    padding: 0;
+  }
+  .theme-toggle span {
+    display: none;
+  }
+  .topbar .product-label {
+    display: none;
+  }
+}

@@ -11,6 +11,7 @@ An independent motorsport replay prototype built with React, TypeScript, ASP.NET
 - Driver focus, last-lap comparisons, and clickable tyre-strategy strips.
 - Original SVG circuit outline with lap-time-based marker interpolation.
 - Interactive circuit map: zoom, drag to pan, selected-driver follow mode, driver visibility, labels/grid controls, and browser-saved layouts per race.
+- Light/dark themes with a header toggle, system preference on first visit, and a browser-saved choice across races.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.
 - Database migrations, Docker Compose, integration tests, browser tests, and GitHub Actions.
 
