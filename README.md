@@ -4,11 +4,13 @@ An independent motorsport replay prototype built with React, TypeScript, ASP.NET
 
 ## What works now
 
-- Historical Monza 2024 replay: 20 drivers, 53 laps, recorded classification changes, tyre stints, and race-control messages.
+- A searchable historical library covering completed Grand Prix and Sprint sessions exposed by OpenF1 from 2023 onward. The current catalog lists 114 non-cancelled sessions, through Interlagos on 8 November 2026.
+- Season and session filters, latest-race highlighting, and explicit cached/import states.
+- Bundled Monza 2024 and Interlagos 2026 replays. Other sessions import on demand and persist in PostgreSQL.
 - Play/pause, 1×–50× playback, timeline scrubbing, lap jumps, and keyboard controls.
 - Driver focus, last-lap comparisons, and clickable tyre-strategy strips.
 - Original SVG circuit outline with lap-time-based marker interpolation.
-- Save, revisit, and delete replay moments. PostgreSQL bookmarks survive API restarts.
+- Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.
 - Database migrations, Docker Compose, integration tests, browser tests, and GitHub Actions.
 
 ## Run the whole app with Docker
@@ -73,7 +75,15 @@ Browser tests exercise the production frontend build. Stop other development ser
 
 ## Data and accuracy
 
-The bundled snapshot was imported from [OpenF1](https://openf1.org/), session **9590**, 1 September 2024. Refresh it intentionally with `node scripts/import-race.mjs`. Routine builds and tests do not query the provider.
+Open **Browse races** to search the archive, filter seasons or Sprint/Grand Prix sessions, and select a replay. The default view opens the newest cached race. A first-time import runs in a background queue; progress is visible, closing the library does not cancel the server import, and later visits read the cached replay. The catalog is a list of provider sessions, not a promise that every session has complete telemetry. Missing or unusable timing returns a clear error.
+
+The catalog refreshes automatically when older than 12 hours, checked hourly while the backend runs. **Check for new races** requests an immediate refresh. If the provider is unavailable, the existing catalog and cached races remain available. Imports and catalog refreshes share a single worker gate with paced API requests; multiple server replicas would need a shared queue/rate limiter before scaling ingestion horizontally.
+
+Node 24 runs the ingestion worker alongside C#. The Docker image includes it; local API development requires Node on PATH. SQL migration `002_catalog` persists refreshed catalogs. No provider requests are needed for already cached replay playback.
+
+Import a specific session manually with `node scripts/import-race.mjs --session 11412`, or refresh the bundled catalog with `node scripts/import-race.mjs --catalog`. These write snapshots into `data/`; rebuild the API afterward to bundle them. Normal UI imports are stored in PostgreSQL instead.
+
+The bundled snapshots were imported from [OpenF1](https://openf1.org/): session **9590** (Monza, 1 September 2024) and **11412** (Interlagos, 8 November 2026). Routine builds and automated tests do not query the provider. Live imports and catalog refreshes require network access.
 
 Lap times, classification messages, stints, and race-control messages are recorded data. **Car movement is interpolated uniformly along a circuit outline using lap duration. It is not GPS playback.** It cannot show true braking points, corner speeds, or on-track separation. The outline comes from one recorded lap's coordinates.
 
@@ -95,6 +105,8 @@ Dockerfile                Multi-stage production build
 
 ## CI and delivery
 
+Branch workflow: `main` holds the release baseline, `develop` integrates reviewed work, and `feature/*` branches hold individual changes. Open pull requests from feature branches into `develop`, then promote tested releases to `main`. CI runs on `main`, `develop`, feature branch pushes, and pull requests. The push helper accepts branch names, for example `node scripts/push-github.mjs develop feature/race-library`.
+
 For the first push from your own Windows terminal, `node scripts/push-github.mjs` handles the sandbox folder ownership check for that command and requests a fresh GitHub device-code sign-in through Git Credential Manager. Open the displayed verification page in your preferred browser. The helper isolates this repository's credential namespace; it does not read credentials, change global Git trust, or erase credentials for other repositories.
 
 Pull requests and pushes to `main` run timing tests, production builds, PostgreSQL integration checks, and browser tests. A second job builds the full Docker image. Successful `main` builds publish `latest` and commit-SHA tags to `ghcr.io/<owner>/<repository>` using GitHub's built-in token.
@@ -103,10 +115,10 @@ This is **continuous integration and image delivery**, not deployment to a live 
 
 ## Next milestones
 
-1. Improve replay fidelity with recorded per-driver location samples and missing-data handling.
-2. Add session selection, ingestion jobs, authentication, and private user bookmarks.
-3. Calibrate a strategy model against historical pace and pit losses.
-4. Add “take control from here” branches with explicit simulation assumptions.
-5. Add balanced upgrades, team progression, and multiplayer challenges.
+1. Plan the map extension: zoom/pan, driver visibility, focus controls, and custom display settings.
+2. Improve replay fidelity with recorded per-driver location samples and missing-data handling.
+3. Add authentication and private user bookmarks.
+4. Calibrate a strategy model, then add “take control from here” branches with explicit assumptions.
+5. Plan upgrades and team progression; car designs, 3D models, and detailed upgrade models are deferred.
 
 The present API is for local development: bookmarks are shared and have no account ownership or authorization. Add accounts, authorization, rate limits, and a production database backup plan before opening a multi-user service.

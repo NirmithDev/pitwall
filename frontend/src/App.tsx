@@ -30,6 +30,8 @@ import {
   standingsAt,
 } from "./race";
 import type { Bookmark, DriverState, Race } from "./race";
+import RaceLibrary from "./RaceLibrary";
+import type { Catalog } from "./RaceLibrary";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, options);
@@ -67,20 +69,43 @@ function App() {
   const [tab, setTab] = useState<"events" | "bookmarks">("events");
   const [expanded, setExpanded] = useState(false);
   const [loadKey, setLoadKey] = useState(0);
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const loadedRace = useRef<string | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     setError("");
-    Promise.all([
-      api<Race>("/api/sessions/monza-2024", { signal: controller.signal }),
-      api<{ storage: string }>("/api/status", { signal: controller.signal }),
-      api<Bookmark[]>("/api/sessions/monza-2024/bookmarks", {
-        signal: controller.signal,
-      }),
-    ])
+    api<Catalog>("/api/sessions", { signal: controller.signal })
+      .then((library) => {
+        setCatalog(library);
+        const requested = new URLSearchParams(window.location.search).get(
+          "race",
+        );
+        const id =
+          library.sessions.find((s) => s.id === requested && s.cached)?.id ??
+          library.sessions.find((s) => s.cached)?.id ??
+          "monza-2024";
+        return Promise.all([
+          api<Race>(`/api/sessions/${id}`, { signal: controller.signal }),
+          api<{ storage: string }>("/api/status", {
+            signal: controller.signal,
+          }),
+          api<Bookmark[]>(`/api/sessions/${id}/bookmarks`, {
+            signal: controller.signal,
+          }),
+        ]);
+      })
       .then(([data, status, saved]) => {
         setRace(data);
         setStorage(status.storage);
         setBookmarks(saved);
+        setSelected(
+          data.drivers.some((d) => d.number === 16)
+            ? 16
+            : data.drivers[0].number,
+        );
+        setComparison(data.drivers.some((d) => d.number === 4) ? 4 : null);
+        loadedRace.current = data.id;
       })
       .catch((e) => {
         if (!controller.signal.aborted) setError(e.message);
@@ -113,7 +138,8 @@ function App() {
     function key(event: KeyboardEvent) {
       if (
         (event.target as HTMLElement).closest("input,select,textarea,button") ||
-        showInfo
+        showInfo ||
+        showLibrary
       )
         return;
       if (event.code === "Space") {
@@ -131,7 +157,7 @@ function App() {
     }
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [elapsed, seek, showInfo]);
+  }, [elapsed, seek, showInfo, showLibrary]);
   useEffect(() => {
     if (!notice) return;
     const id = setTimeout(() => setNotice(""), 4500);
@@ -159,7 +185,7 @@ function App() {
     setSaving(true);
     try {
       const bookmark = await api<Bookmark>(
-        "/api/sessions/monza-2024/bookmarks",
+        `/api/sessions/${race!.id}/bookmarks`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -186,7 +212,7 @@ function App() {
   }
   async function removeBookmark(id: string) {
     try {
-      await api(`/api/sessions/monza-2024/bookmarks/${id}`, {
+      await api(`/api/sessions/${race!.id}/bookmarks/${id}`, {
         method: "DELETE",
       });
       setBookmarks((b) => b.filter((x) => x.id !== id));
@@ -218,7 +244,9 @@ function App() {
         <p>Loading the moments that mattered…</p>
       </div>
     );
-  const trackPath = `M ${race.track.map((p) => p.join(",")).join(" L ")} Z`;
+  const trackPath = race.track.length
+    ? `M ${race.track.map((p) => p.join(",")).join(" L ")} Z`
+    : "";
   const focusedStints = race.stints.filter((s) => s.driver === selected);
   return (
     <div className="app-shell">
@@ -246,45 +274,77 @@ function App() {
         <section className="race-header">
           <div>
             <div className="eyebrow">
-              <span className="italy">
-                <i />
-                <i />
-                <i />
-              </span>{" "}
-              ROUND 16 <span>/</span> 2024 SEASON
+              <span className="country-chip">
+                {race.countryCode ?? race.country.toUpperCase()}
+              </span>
+              {race.kind === "Sprint" ? "SPRINT" : "GRAND PRIX"} <span>/</span>{" "}
+              {race.year} SEASON
             </div>
             <h1>
-              Monza<span className="title-dot">.</span>
+              {race.circuit}
+              <span className="title-dot">.</span>
             </h1>
-            <p>The temple of speed. Every lap, another perspective.</p>
+            <p>{race.country}. Every lap, another perspective.</p>
           </div>
           <div className="race-facts">
             <div>
               <span>RACE DISTANCE</span>
               <strong>
-                53 <small>LAPS</small>
+                {race.totalLaps} <small>LAPS</small>
               </strong>
             </div>
             <div>
-              <span>CIRCUIT LENGTH</span>
+              <span>{race.distanceKm ? "CIRCUIT LENGTH" : "TIMED LAPS"}</span>
               <strong>
-                5.793 <small>KM</small>
+                {race.distanceKm ?? race.laps.length}{" "}
+                <small>{race.distanceKm ? "KM" : "RECORDED"}</small>
               </strong>
             </div>
             <div className="date-fact">
               <span>RACE DATE</span>
               <strong>
-                01 <small>SEP 2024</small>
+                {race.date.slice(-2)}{" "}
+                <small>
+                  {new Date(race.date + "T12:00:00Z")
+                    .toLocaleDateString("en-GB", {
+                      month: "short",
+                      year: "numeric",
+                      timeZone: "UTC",
+                    })
+                    .toUpperCase()}
+                </small>
               </strong>
             </div>
           </div>
         </section>
+        <section className="library-bar">
+          <div>
+            <span className="library-count">
+              {catalog?.sessions.length ?? "…"} SESSIONS
+            </span>
+            <span>2023 → {catalog?.sessions[0]?.year ?? race.year}</span>
+            <span className="library-latest">
+              Latest: {catalog?.sessions[0]?.circuit ?? race.circuit} ·{" "}
+              {catalog?.sessions[0]?.date ?? race.date}
+            </span>
+          </div>
+          <button
+            className="save-button"
+            onClick={() => {
+              setPlaying(false);
+              setShowLibrary(true);
+            }}
+          >
+            Browse races <ChevronRight size={14} />
+          </button>
+        </section>
         <section className="session-bar">
           <div>
             <span className="session-active">
-              <Flag size={14} /> RACE SESSION
+              <Flag size={14} /> {race.kind === "Sprint" ? "SPRINT" : "RACE"}{" "}
+              SESSION
             </span>
-            <span className="session-description">Italian Grand Prix</span>
+            <span className="session-description">{race.title}</span>
           </div>
           <div className="storage-status">
             <Database size={13} />
@@ -299,7 +359,8 @@ function App() {
             <div className="panel-heading">
               <h2>Classification</h2>
               <span className="mono">
-                LAP <b data-testid="current-lap">{currentLap}</b> / 53
+                LAP <b data-testid="current-lap">{currentLap}</b> /{" "}
+                {race.totalLaps}
               </span>
             </div>
             <div className="table-heading">
@@ -378,7 +439,7 @@ function App() {
                 viewBox="0 0 800 520"
                 className="track-svg"
                 role="img"
-                aria-label="Monza circuit with interpolated driver markers"
+                aria-label={`${race.circuit} circuit with interpolated driver markers`}
               >
                 <defs>
                   <pattern
@@ -454,7 +515,9 @@ function App() {
                   fontFamily="monospace"
                   letterSpacing="3"
                 >
-                  AUTODROMO NAZIONALE MONZA
+                  {race.track.length
+                    ? race.circuit.toUpperCase()
+                    : "CIRCUIT COORDINATES UNAVAILABLE"}
                 </text>
                 {standings
                   .filter((s) => s.driver.number !== selected)
@@ -749,7 +812,15 @@ function App() {
               }
             />
             <div className="lap-ticks">
-              {[1, 10, 20, 30, 40, 53].map((lap) => (
+              {[
+                ...new Set([
+                  1,
+                  ...[0.2, 0.4, 0.6, 0.8].map((f) =>
+                    Math.max(1, Math.round(race.totalLaps * f)),
+                  ),
+                  race.totalLaps,
+                ]),
+              ].map((lap) => (
                 <button key={lap} onClick={() => seek(seekToLap(race, lap))}>
                   LAP {lap.toString().padStart(2, "0")}
                 </button>
@@ -790,7 +861,7 @@ function App() {
                 }}
               />
             </div>
-            <span className="tiny-label">53 LAPS</span>
+            <span className="tiny-label">{race.totalLaps} LAPS</span>
           </div>
           <div className="strategy-bottom">
             <span>
@@ -816,6 +887,45 @@ function App() {
           <Check size={16} />
           {notice}
         </div>
+      )}
+      {showLibrary && (
+        <RaceLibrary
+          initial={catalog}
+          currentId={race.id}
+          onClose={() => setShowLibrary(false)}
+          onCatalog={setCatalog}
+          onLoaded={(data, saved) => {
+            setRace(data);
+            setBookmarks(saved);
+            setElapsed(0);
+            setPlaying(false);
+            const driver = data.drivers.some((d) => d.number === 16)
+              ? 16
+              : data.drivers[0].number;
+            setSelected(driver);
+            setComparison(
+              data.drivers.some((d) => d.number === 4) && driver !== 4
+                ? 4
+                : null,
+            );
+            setTab("events");
+            setExpanded(false);
+            setNotice(`${data.circuit} ${data.year} loaded`);
+            const url = new URL(window.location.href);
+            url.searchParams.set("race", data.id);
+            window.history.replaceState({}, "", url);
+            setCatalog((c) =>
+              c
+                ? {
+                    ...c,
+                    sessions: c.sessions.map((s) =>
+                      s.id === data.id ? { ...s, cached: true } : s,
+                    ),
+                  }
+                : c,
+            );
+          }}
+        />
       )}
       {showInfo && (
         <div className="modal-backdrop" onClick={() => setShowInfo(false)}>
@@ -851,7 +961,8 @@ function App() {
             <p>
               Lap durations, position changes, tyre stints, and race-control
               messages come from the historical OpenF1 session{" "}
-              <strong>9590</strong> (Monza, 1 September 2024).
+              <strong>{race.sessionKey ?? 9590}</strong> ({race.circuit},{" "}
+              {race.date}).
             </p>
             <p>
               The circuit outline uses coordinates from one recorded lap.{" "}
@@ -917,6 +1028,7 @@ function CarMarker({
   compared: boolean;
   onSelect: () => void;
 }) {
+  if (!track.length) return null;
   const [x, y] = pointOnTrack(track, state.progress);
   return (
     <g

@@ -17,7 +17,7 @@ Your machine already has Docker Desktop, Docker CLI, Compose, and a working WSL2
 2. A .NET SDK stage restores and publishes the C# API with its historical data snapshot and migration.
 3. A smaller .NET runtime stage receives the API and frontend build, then runs them as the non-root `app` user.
 
-The final container does not need the Node development server or .NET SDK. ASP.NET serves both `/api/...` and the compiled React files.
+The final container includes the Node executable for the historical data ingestion worker, but does not run a Node development server or include the .NET SDK. ASP.NET serves both `/api/...` and the compiled React files. The worker fetches catalog updates and selected races, and imported data is stored in PostgreSQL.
 
 ## Start it
 

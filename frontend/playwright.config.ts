@@ -11,7 +11,7 @@ export default defineConfig({
       url: "http://127.0.0.1:5080/health",
       reuseExistingServer: !process.env.CI,
       timeout: 60000,
-      env: { ConnectionStrings__Pitwall: "" },
+      env: { ConnectionStrings__Pitwall: "", Catalog__AutoRefresh: "false" },
     },
     {
       command: "npm run preview",

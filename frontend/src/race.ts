@@ -30,6 +30,9 @@ export interface RaceEvent {
 }
 export interface Race {
   id: string;
+  sessionKey?: number;
+  kind?: string;
+  countryCode?: string;
   title: string;
   circuit: string;
   country: string;
@@ -38,7 +41,7 @@ export interface Race {
   totalLaps: number;
   duration: number;
   startTime: string;
-  distanceKm: number;
+  distanceKm: number | null;
   source: {
     name: string;
     url: string;

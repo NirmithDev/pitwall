@@ -1,7 +1,7 @@
 name: Verify and deliver
 on:
   push:
-    branches: [main]
+    branches: [main, develop, "feature/**"]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -42,6 +42,8 @@ jobs:
       - name: Test timing and interpolation
         run: npm test
         working-directory: frontend
+      - name: Test historical catalog filtering
+        run: node --test scripts/import-race.test.mjs
       - name: Build frontend
         run: npm run build
         working-directory: frontend

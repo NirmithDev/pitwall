@@ -15,12 +15,14 @@ import urllib.request
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--postgres', action='store_true')
+parser.add_argument('--cached-session', help='Also verify an already imported replay survives restart; does not call the provider')
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[1]
 dll = root / 'backend/Pitwall.Api/bin/Release/net10.0/Pitwall.Api.dll'
 base = 'http://127.0.0.1:5088'
 opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 env = {**os.environ, 'ASPNETCORE_URLS': base, 'ASPNETCORE_ENVIRONMENT': 'Development'}
+env['Catalog__AutoRefresh'] = 'false'
 connection = os.environ.get('ConnectionStrings__Pitwall')
 # Python uppercases os.environ keys on Windows; normalize before copying to a plain dict.
 for key in list(env):
@@ -79,6 +81,15 @@ try:
     assert status == 200 and len(race['drivers']) == 20 and len(race['laps']) > 1000
     assert len(race['track']) >= 20 and race['totalLaps'] == 53
     assert request('/api/sessions/missing')[0] == 404
+    catalog = request('/api/sessions')[1]
+    assert len(catalog['sessions']) > 100
+    assert catalog['sessions'][0]['year'] >= 2026
+    assert request('/api/sessions/missing/import', 'POST')[0] == 404
+    assert request('/api/sessions/monza-2024/import', 'POST')[1]['status'] == 'completed'
+    imported = None
+    if args.cached_session:
+        status, imported = request('/api/sessions/' + args.cached_session)
+        assert status == 200 and imported['id'] == args.cached_session
     assert request('/api/unknown')[0] == 404
     path = '/api/sessions/monza-2024/bookmarks'
     for invalid in [
@@ -92,10 +103,14 @@ try:
     assert status == 201 and bookmark['elapsedSeconds'] == 123.45
     bookmark_id = bookmark['id']
     assert any(b['id'] == bookmark_id for b in request(path)[1])
+    assert all(b['id'] != bookmark_id for b in request('/api/sessions/session-11412/bookmarks')[1])
+    assert request(f'/api/sessions/session-11412/bookmarks/{bookmark_id}', 'DELETE')[0] == 404
     if args.postgres:
         stop()
         start()
         assert any(b['id'] == bookmark_id for b in request(path)[1]), 'Bookmark must persist across process restart'
+        if imported:
+            assert request('/api/sessions/' + args.cached_session)[1] == imported, 'Imported replay must persist across process restart'
     assert request(f'{path}/{bookmark_id}', 'DELETE')[0] == 204
     assert request(f'{path}/{bookmark_id}', 'DELETE')[0] == 404
     bookmark_id = None
