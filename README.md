@@ -10,6 +10,7 @@ An independent motorsport replay prototype built with React, TypeScript, ASP.NET
 - Play/pause, 1×–50× playback, timeline scrubbing, lap jumps, and keyboard controls.
 - Driver focus, last-lap comparisons, and clickable tyre-strategy strips.
 - Original SVG circuit outline with lap-time-based marker interpolation.
+- Interactive circuit map: zoom, drag to pan, selected-driver follow mode, driver visibility, labels/grid controls, and browser-saved layouts per race.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.
 - Database migrations, Docker Compose, integration tests, browser tests, and GitHub Actions.
 
@@ -74,6 +75,16 @@ Python 3.12+ is required for API integration tests. The PostgreSQL integration t
 Browser tests exercise the production frontend build. Stop other development servers before running them when you want isolated test processes.
 
 ## Data and accuracy
+
+### Customize the map
+
+Use **+ / −** to zoom or **Fit circuit** to reset the camera. Drag the map to pan; Ctrl + scroll zooms around the pointer. With the map focused, arrow keys pan, `+`/`−` zoom, and Home fits the circuit. These map shortcuts do not seek playback.
+
+**Follow** centers the view on the selected driver's interpolated marker. Manual camera movement exits follow mode. Open **Drivers & view** to select visible drivers, focus on the selected comparison pair, and change labels or the grid. Selecting a different driver reveals their marker if it was hidden.
+
+**Save layout** stores the current camera and display settings in this browser, separately for each race. These are local preferences, not account-synchronized settings; follow mode itself is temporary. **Restore defaults** resets the current view settings; save afterward if you want those defaults to replace your saved layout.
+
+See [the follow-up plan](docs/FOLLOW-UP-PLAN.md) for the sequence of replay fidelity, custom tracks, strategy, and later upgrades.
 
 Open **Browse races** to search the archive, filter seasons or Sprint/Grand Prix sessions, and select a replay. The default view opens the newest cached race. A first-time import runs in a background queue; progress is visible, closing the library does not cancel the server import, and later visits read the cached replay. The catalog is a list of provider sessions, not a promise that every session has complete telemetry. Missing or unusable timing returns a clear error.
 
