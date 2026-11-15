@@ -59,6 +59,8 @@ For a preview without PostgreSQL, run `./scripts/dev-api.ps1 -Snapshot`. The rac
 
 ## Validate
 
+See [the testing guide](docs/TESTING.md) for current browser coverage, deterministic provider fixtures, and failure reports.
+
 ```powershell
 dotnet build backend/Pitwall.Api/Pitwall.Api.csproj -c Release
 python scripts/test-api.py
