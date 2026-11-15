@@ -1,4 +1,112 @@
 import { test, expect } from "@playwright/test";
+
+test("lap stepping, speed, timeline endpoints and restarting a finished race", async ({
+  page,
+}) => {
+  await page.goto("/?race=monza-2024");
+  await page.getByRole("button", { name: "Next lap", exact: true }).click();
+  await expect(page.getByTestId("current-lap")).toHaveText("2");
+  await page.getByRole("button", { name: "Previous lap", exact: true }).click();
+  await expect(page.getByTestId("current-lap")).toHaveText("1");
+  await page.getByLabel("Playback speed", { exact: true }).selectOption("50");
+  await expect(page.getByLabel("Playback speed", { exact: true })).toHaveValue(
+    "50",
+  );
+  const timeline = page.getByRole("slider", {
+    name: "Race timeline",
+    exact: true,
+  });
+  await timeline.focus();
+  await page.keyboard.press("End");
+  await expect(page.getByTestId("current-lap")).toHaveText("53");
+  await expect(
+    page
+      .locator(".circuit-topline")
+      .getByText("CHEQUERED FLAG", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Play replay", exact: true }).click();
+  await expect(page.getByTestId("current-lap")).toHaveText("1");
+  await expect(
+    page.getByRole("button", { name: "Pause replay", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Restart replay", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Play replay", exact: true }),
+  ).toBeVisible();
+  await expect(timeline).toHaveValue("0");
+  await expect(page.getByTestId("elapsed-time")).toContainText("00:00:00");
+});
+
+test("initial replay load failures recover through Try again", async ({
+  page,
+}) => {
+  let unavailable = true;
+  await page.route("**/api/sessions/monza-2024", (route) =>
+    unavailable
+      ? route.fulfill({
+          status: 503,
+          json: { message: "Temporary test outage" },
+        })
+      : route.continue(),
+  );
+  await page.goto("/?race=monza-2024");
+  await expect(
+    page.getByRole("heading", {
+      name: "We couldn’t load the race.",
+      exact: true,
+    }),
+  ).toBeVisible();
+  unavailable = false;
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Monza.", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByTestId("circuit-map")).toBeVisible();
+});
+
+test("failed historical imports preserve the open replay and allow another selection", async ({
+  page,
+  request,
+}) => {
+  const catalog = await (await request.get("/api/sessions")).json();
+  catalog.sessions = catalog.sessions.map((s: { id: string }) =>
+    s.id === "session-11404" ? { ...s, cached: false } : s,
+  );
+  await page.route("**/api/sessions", (route) =>
+    route.fulfill({ json: catalog }),
+  );
+  await page.route("**/api/sessions/session-11404/import", (route) =>
+    route.fulfill({
+      status: 202,
+      json: {
+        sessionId: "session-11404",
+        status: "failed",
+        error: "This session has no usable timing in this test.",
+      },
+    }),
+  );
+  await page.goto("/?race=monza-2024");
+  await page.getByRole("button", { name: "Browse races", exact: true }).click();
+  await page.getByLabel("Season", { exact: true }).selectOption("2026");
+  await page.getByLabel("Search races", { exact: true }).fill("Mexico");
+  await page
+    .getByRole("button", { name: "Load Mexico City 2026 Race", exact: true })
+    .click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "This session has no usable timing in this test.",
+  );
+  await expect(page).toHaveURL(/race=monza-2024/);
+  await page.getByLabel("Search races", { exact: true }).fill("Interlagos");
+  await page
+    .getByRole("button", { name: "Load Interlagos 2026 Race", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Interlagos.", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+});
 test("playback, lap seeking, driver focus, saving and deleting a moment", async ({
   page,
 }) => {
