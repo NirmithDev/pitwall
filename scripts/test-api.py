@@ -80,6 +80,12 @@ try:
     status, race = request('/api/sessions/monza-2024')
     assert status == 200 and len(race['drivers']) == 20 and len(race['laps']) > 1000
     assert len(race['track']) >= 20 and race['totalLaps'] == 53
+    assert race['schemaVersion'] >= 2 and len(race['locations']['traces']) == 20
+    for trace in race['locations']['traces']:
+        samples = trace['samples']
+        assert len(samples) > 1
+        assert all(samples[i][0] < samples[i+1][0] for i in range(len(samples)-1))
+        assert all(0 <= sample[1] <= 800 and 0 <= sample[2] <= 520 for sample in samples)
     assert request('/api/sessions/missing')[0] == 404
     catalog = request('/api/sessions')[1]
     assert len(catalog['sessions']) > 100

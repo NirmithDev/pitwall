@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Services.AddProblemDetails();
+builder.Services.AddResponseCompression();
 var connection = builder.Configuration.GetConnectionString("Pitwall");
 if (!string.IsNullOrWhiteSpace(connection)) builder.Services.AddSingleton(NpgsqlDataSource.Create(connection));
 builder.Services.AddSingleton<RaceStore>();
@@ -15,6 +16,7 @@ builder.Services.AddHostedService(services => services.GetRequiredService<RaceIm
 builder.Services.AddHostedService<CatalogRefreshService>();
 var app = builder.Build();
 app.UseExceptionHandler();
+app.UseResponseCompression();
 await app.Services.GetRequiredService<RaceStore>().InitializeAsync();
 app.UseDefaultFiles();
 app.UseStaticFiles();

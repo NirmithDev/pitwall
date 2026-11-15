@@ -153,9 +153,7 @@ test("mobile layout stays within the viewport and data notes are accessible", as
   await page
     .getByRole("button", { name: "About this replay", exact: true })
     .click();
-  await expect(page.getByRole("dialog")).toContainText(
-    "They do not show GPS positions",
-  );
+  await expect(page.getByRole("dialog")).toContainText("not lane-accurate GPS");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
 });

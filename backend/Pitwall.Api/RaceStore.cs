@@ -42,11 +42,11 @@ public sealed class RaceStore
         }
         foreach (var race in races)
         {
-            await using var seed = new NpgsqlCommand("INSERT INTO replay_sessions(id,payload) VALUES (@id,@payload) ON CONFLICT(id) DO NOTHING",conn,tx);
+            await using var seed = new NpgsqlCommand("INSERT INTO replay_sessions(id,payload) VALUES (@id,@payload) ON CONFLICT(id) DO UPDATE SET payload=EXCLUDED.payload,imported_at=now() WHERE COALESCE((replay_sessions.payload->>'schemaVersion')::int,1) < COALESCE((EXCLUDED.payload->>'schemaVersion')::int,1)",conn,tx);
             seed.Parameters.AddWithValue("id",race.Key);seed.Parameters.AddWithValue("payload",NpgsqlDbType.Jsonb,race.Value);await seed.ExecuteNonQueryAsync();
         }
         await tx.CommitAsync();
-        logger.LogInformation("PostgreSQL ready; bundled replay data seeded without overwriting imported sessions.");
+        logger.LogInformation("PostgreSQL ready; bundled replay revisions upgraded while preserving bookmarks.");
     }
     public async Task<bool> ReadyAsync(CancellationToken ct)
     {

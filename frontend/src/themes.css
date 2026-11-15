@@ -11,6 +11,17 @@
   font-size: 10px;
   white-space: nowrap;
 }
+[data-theme="light"] .position-source-bar {
+  color: #506d93;
+}
+[data-theme="light"] .position-source-bar select {
+  background: #fff;
+  border-color: #bdcee5;
+  color: #34547e;
+}
+[data-theme="light"] .position-source-bar .location-gap {
+  color: #875a18;
+}
 :root[data-theme="light"] {
   color-scheme: light;
   color: #1e2d43;

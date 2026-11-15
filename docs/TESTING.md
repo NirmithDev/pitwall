@@ -1,6 +1,6 @@
 # Current automated checks
 
-## Playwright: 15 browser scenarios
+## Playwright: 18 browser scenarios
 
 | Area | Coverage |
 | --- | --- |
@@ -16,14 +16,15 @@
 | Storage failures | Damaged JSON falls back to defaults; saving failures leave playback usable |
 | Mobile | Replay/library/map settings stay within a 390-pixel viewport |
 | Themes | Light/dark switching, first-visit system preference, persistence across reload/races, mobile dialogs, and blocked preference storage |
+| Recorded locations | Monza's recorded/estimate toggle preserves time; a deterministic dropout hides markers and resumes on a real sample; unavailable races keep estimates explicit |
 
 These scenarios run against the production frontend build in Chromium. Historical import transitions/outages are mocked so tests do not depend on the external provider. Cached replay data and bookmark CRUD use the C# API. Each Playwright test receives an isolated browser context.
 
 ## Other checks
 
-- 17 Vitest checks cover replay timing, track interpolation, camera bounds/zoom, and saved-layout validation.
-- Node tests cover historical session filtering and stable session identifiers.
-- Python integration checks cover the real API, input validation, race-specific bookmarks, SQL migrations, and PostgreSQL restart persistence.
+- 25 Vitest checks cover replay timing, track interpolation, camera bounds/zoom, saved-layout validation, and recorded sample lookup/smoothing/gaps/seek behavior.
+- Five Node tests cover historical session filtering, stable identifiers, location clock/projection alignment, invalid coordinates, and coverage gaps.
+- Python integration checks cover the real API, input validation, race-specific bookmarks, SQL migrations, PostgreSQL restart persistence, and bundled trace ordering/bounds. A real cache upgrade was also checked against the development database to verify bookmark preservation.
 - GitHub Actions builds the frontend, API, and container and runs the browser suite against bundled data.
 
 ## Run locally
