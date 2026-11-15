@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowLeft,
@@ -25,12 +25,12 @@ import {
   compoundColor,
   formatClock,
   formatLap,
-  pointOnTrack,
   seekToLap,
   standingsAt,
 } from "./race";
-import type { Bookmark, DriverState, Race } from "./race";
+import type { Bookmark, Race } from "./race";
 import RaceLibrary from "./RaceLibrary";
+import CircuitMap from "./CircuitMap";
 import type { Catalog } from "./RaceLibrary";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
@@ -71,7 +71,6 @@ function App() {
   const [loadKey, setLoadKey] = useState(0);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
-  const loadedRace = useRef<string | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     setError("");
@@ -105,7 +104,6 @@ function App() {
             : data.drivers[0].number,
         );
         setComparison(data.drivers.some((d) => d.number === 4) ? 4 : null);
-        loadedRace.current = data.id;
       })
       .catch((e) => {
         if (!controller.signal.aborted) setError(e.message);
@@ -244,9 +242,6 @@ function App() {
         <p>Loading the moments that mattered…</p>
       </div>
     );
-  const trackPath = race.track.length
-    ? `M ${race.track.map((p) => p.join(",")).join(" L ")} Z`
-    : "";
   const focusedStints = race.stints.filter((s) => s.driver === selected);
   return (
     <div className="app-shell">
@@ -434,126 +429,24 @@ function App() {
               </span>
               <span className="mono">{formatClock(elapsed)}</span>
             </div>
-            <div className="track-stage">
-              <svg
-                viewBox="0 0 800 520"
-                className="track-svg"
-                role="img"
-                aria-label={`${race.circuit} circuit with interpolated driver markers`}
-              >
-                <defs>
-                  <pattern
-                    id="grid"
-                    width="28"
-                    height="28"
-                    patternUnits="userSpaceOnUse"
-                  >
-                    <circle cx="1" cy="1" r="0.7" fill="#252b36" />
-                  </pattern>
-                  <filter id="glow">
-                    <feGaussianBlur stdDeviation="5" />
-                  </filter>
-                </defs>
-                <rect width="800" height="520" fill="url(#grid)" />
-                <path
-                  d={trackPath}
-                  fill="none"
-                  stroke="#000"
-                  strokeWidth="22"
-                  strokeLinejoin="round"
-                  opacity=".28"
-                  transform="translate(0 6)"
-                />
-                <path
-                  d={trackPath}
-                  fill="none"
-                  stroke="#343b49"
-                  strokeWidth="15"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d={trackPath}
-                  fill="none"
-                  stroke="#181e28"
-                  strokeWidth="9"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d={trackPath}
-                  fill="none"
-                  stroke="#596477"
-                  strokeWidth=".7"
-                  strokeDasharray="2 8"
-                  opacity=".5"
-                />
-                {race.track[0] && (
-                  <g
-                    transform={`translate(${race.track[0][0]},${race.track[0][1]})`}
-                  >
-                    <path
-                      d="M-8 -12 L8 12"
-                      stroke="#e4e8ef"
-                      strokeWidth="3"
-                      strokeDasharray="3 2"
-                    />
-                    <text
-                      x="18"
-                      y="-13"
-                      fill="#758092"
-                      fontSize="11"
-                      fontFamily="monospace"
-                    >
-                      START / FINISH
-                    </text>
-                  </g>
-                )}
-                <text
-                  x="70"
-                  y="466"
-                  fill="#3e4858"
-                  fontSize="12"
-                  fontFamily="monospace"
-                  letterSpacing="3"
-                >
-                  {race.track.length
-                    ? race.circuit.toUpperCase()
-                    : "CIRCUIT COORDINATES UNAVAILABLE"}
-                </text>
-                {standings
-                  .filter((s) => s.driver.number !== selected)
-                  .reverse()
-                  .map((s) => (
-                    <CarMarker
-                      key={s.driver.number}
-                      state={s}
-                      track={race.track}
-                      selected={false}
-                      compared={s.driver.number === comparison}
-                      onSelect={() => setSelected(s.driver.number)}
-                    />
-                  ))}
-                <CarMarker
-                  state={focused}
-                  track={race.track}
-                  selected
-                  compared={false}
-                  onSelect={() => {}}
-                />
-              </svg>
-              <div className="track-caption">
-                <span className="track-caption-line" />
-                <span>
-                  Original circuit outline · Interpolated car movement
-                </span>
-              </div>
-            </div>
+            <CircuitMap
+              key={race.id}
+              race={race}
+              standings={standings}
+              focused={focused}
+              comparison={comparison}
+              onSelect={(number) => {
+                setSelected(number);
+                if (comparison === number) setComparison(null);
+              }}
+            />
             <div className="circuit-bottom">
               <div>
                 <span
                   className="follow-indicator"
                   style={{ background: focused.driver.color }}
                 />{" "}
-                FOLLOWING <strong>{focused.driver.code}</strong>
+                SELECTED <strong>{focused.driver.code}</strong>
               </div>
               {rival && (
                 <div>
@@ -1013,87 +906,6 @@ function App() {
         </div>
       )}
     </div>
-  );
-}
-function CarMarker({
-  state,
-  track,
-  selected,
-  compared,
-  onSelect,
-}: {
-  state: DriverState;
-  track: [number, number][];
-  selected: boolean;
-  compared: boolean;
-  onSelect: () => void;
-}) {
-  if (!track.length) return null;
-  const [x, y] = pointOnTrack(track, state.progress);
-  return (
-    <g
-      transform={`translate(${x},${y})`}
-      opacity={state.missing ? 0.35 : 1}
-      className="car-marker"
-      onClick={onSelect}
-      role="button"
-      tabIndex={0}
-      aria-label={`Follow ${state.driver.code} on circuit`}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect();
-        }
-      }}
-    >
-      {selected && (
-        <circle
-          r="16"
-          fill={state.driver.color}
-          opacity=".3"
-          filter="url(#glow)"
-        />
-      )}
-      {(selected || compared) && (
-        <circle
-          r={selected ? 12 : 10}
-          fill="none"
-          stroke={state.driver.color}
-          strokeWidth="1.5"
-          strokeDasharray={compared ? "3 3" : undefined}
-        />
-      )}
-      <circle
-        r={selected ? 6 : 4}
-        fill={state.driver.color}
-        stroke="#10151d"
-        strokeWidth="2"
-      />
-      {(selected || compared) && (
-        <g transform="translate(16,-24)">
-          <rect
-            x="-3"
-            y="-12"
-            width="43"
-            height="21"
-            rx="4"
-            fill="#111824"
-            stroke={state.driver.color}
-            strokeOpacity=".5"
-          />
-          <text
-            x="18"
-            y="2"
-            fill="#f4f5f8"
-            textAnchor="middle"
-            fontFamily="monospace"
-            fontSize="11"
-          >
-            {state.driver.code}
-          </text>
-        </g>
-      )}
-    </g>
   );
 }
 export default App;
