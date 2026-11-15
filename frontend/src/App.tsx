@@ -31,6 +31,7 @@ import {
 import type { Bookmark, Race } from "./race";
 import RaceLibrary from "./RaceLibrary";
 import CircuitMap from "./CircuitMap";
+import ThemeToggle from "./ThemeToggle";
 import type { Catalog } from "./RaceLibrary";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
@@ -253,6 +254,7 @@ function App() {
           RACE REPLAY LAB <span className="beta">V0.1</span>
         </div>
         <div className="topbar-right">
+          <ThemeToggle />
           <span className="historical">
             <i /> HISTORICAL REPLAY
           </span>
@@ -695,7 +697,7 @@ function App() {
               type="range"
               min="0"
               max={race.duration}
-              step="0.1"
+              step="any"
               value={elapsed}
               onChange={(e) => seek(Number(e.target.value))}
               style={

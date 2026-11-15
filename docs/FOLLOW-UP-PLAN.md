@@ -1,6 +1,6 @@
 # Follow-up plan
 
-The race library is the baseline. Current implementation work is on `feature/map-controls`, branched from `feature/race-library` so it includes the unmerged archive work. Review the library first, then merge this dependent branch after the library is in `develop`.
+The race library is the baseline. The map milestone was implemented on `feature/map-controls`, branching from `feature/race-library`. Completed work and expanded browser coverage are now consolidated in `master`, including the latest GitHub merges into `main`.
 
 ## 1. Interactive replay map — implemented
 
@@ -35,4 +35,4 @@ Implemented on `feature/map-controls`: camera bounds/zoom and layout-validation 
 
 ## Branch and validation workflow
 
-Use a focused feature branch for each milestone, run timing/camera unit tests and browser tests, and review into `develop`. Promote to `main` once the integration branch is ready. Container delivery continues through the existing GitHub Actions workflow.
+Use a focused feature branch for each milestone, run timing/camera unit tests and browser tests, and review into `develop`. Promote to `master` once the integration branch is ready. Container delivery continues through the existing GitHub Actions workflow.

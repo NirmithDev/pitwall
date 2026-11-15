@@ -11,6 +11,7 @@ An independent motorsport replay prototype built with React, TypeScript, ASP.NET
 - Driver focus, last-lap comparisons, and clickable tyre-strategy strips.
 - Original SVG circuit outline with lap-time-based marker interpolation.
 - Interactive circuit map: zoom, drag to pan, selected-driver follow mode, driver visibility, labels/grid controls, and browser-saved layouts per race.
+- Light/dark themes with a header toggle, system preference on first visit, and a browser-saved choice across races.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.
 - Database migrations, Docker Compose, integration tests, browser tests, and GitHub Actions.
 
@@ -58,6 +59,8 @@ Open **http://localhost:5173**. Vite proxies `/api` requests to the C# backend o
 For a preview without PostgreSQL, run `./scripts/dev-api.ps1 -Snapshot`. The race still works, but bookmarks are temporary and shared in API memory. Snapshot mode is explicitly labeled in the interface.
 
 ## Validate
+
+See [the testing guide](docs/TESTING.md) for current browser coverage, deterministic provider fixtures, and failure reports.
 
 ```powershell
 dotnet build backend/Pitwall.Api/Pitwall.Api.csproj -c Release
@@ -116,11 +119,11 @@ Dockerfile                Multi-stage production build
 
 ## CI and delivery
 
-Branch workflow: `main` holds the release baseline, `develop` integrates reviewed work, and `feature/*` branches hold individual changes. Open pull requests from feature branches into `develop`, then promote tested releases to `main`. CI runs on `main`, `develop`, feature branch pushes, and pull requests. The push helper accepts branch names, for example `node scripts/push-github.mjs develop feature/race-library`.
+Branch workflow: `master` consolidates the completed work, `develop` is available for integration, and `feature/*` branches hold individual changes. Open pull requests from feature branches into `develop`, then promote tested releases to `master`. CI supports `main`, `master`, `develop`, feature branch pushes, and pull requests. The push helper accepts branch names, for example `node scripts/push-github.mjs master`.
 
 For the first push from your own Windows terminal, `node scripts/push-github.mjs` handles the sandbox folder ownership check for that command and requests a fresh GitHub device-code sign-in through Git Credential Manager. Open the displayed verification page in your preferred browser. The helper isolates this repository's credential namespace; it does not read credentials, change global Git trust, or erase credentials for other repositories.
 
-Pull requests and pushes to `main` run timing tests, production builds, PostgreSQL integration checks, and browser tests. A second job builds the full Docker image. Successful `main` builds publish `latest` and commit-SHA tags to `ghcr.io/<owner>/<repository>` using GitHub's built-in token.
+Pull requests and configured branch pushes run timing tests, production builds, PostgreSQL integration checks, and browser tests. A second job builds the full Docker image. Successful `main` or `master` builds publish `latest` and commit-SHA tags to `ghcr.io/<owner>/<repository>` using GitHub's built-in token.
 
 This is **continuous integration and image delivery**, not deployment to a live hosting service. No deployment host or credentials are configured. The first Actions run must pass before treating the hosted pipeline as verified.
 
