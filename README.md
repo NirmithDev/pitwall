@@ -95,6 +95,8 @@ Dockerfile                Multi-stage production build
 
 ## CI and delivery
 
+Branch workflow: `main` holds the release baseline, `develop` integrates reviewed work, and `feature/*` branches hold individual changes. Open pull requests from feature branches into `develop`, then promote tested releases to `main`. CI runs on `main`, `develop`, and pull requests. The push helper accepts branch names, for example `node scripts/push-github.mjs develop feature/race-library`.
+
 For the first push from your own Windows terminal, `node scripts/push-github.mjs` handles the sandbox folder ownership check for that command and requests a fresh GitHub device-code sign-in through Git Credential Manager. Open the displayed verification page in your preferred browser. The helper isolates this repository's credential namespace; it does not read credentials, change global Git trust, or erase credentials for other repositories.
 
 Pull requests and pushes to `main` run timing tests, production builds, PostgreSQL integration checks, and browser tests. A second job builds the full Docker image. Successful `main` builds publish `latest` and commit-SHA tags to `ghcr.io/<owner>/<repository>` using GitHub's built-in token.

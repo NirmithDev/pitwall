@@ -5,6 +5,14 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url)).replace(/[\\/]$/, "");
 const base = ["-c", `safe.directory=${root}`, "-C", root];
+const branches = process.argv.length > 2 ? [...new Set(process.argv.slice(2))] : ["main"];
+for (const branch of branches) {
+  const exists = spawnSync("git", [...base, "show-ref", "--verify", `refs/heads/${branch}`], { stdio: "ignore" });
+  if (exists.status !== 0 || branch.startsWith("-")) {
+    console.error(`Not a local branch: ${branch}. No push was attempted.`);
+    process.exit(1);
+  }
+}
 const remote = spawnSync("git", [...base, "remote", "get-url", "origin"], {
   encoding: "utf8",
 });
@@ -19,7 +27,7 @@ const config = spawnSync("git", [...base, "config", "--local", "credential.names
 });
 if (config.status !== 0) process.exit(config.status ?? 1);
 
-console.log("Pushing Pitwall. If prompted, open https://github.com/login/device in Brave.");
+console.log(`Pushing Pitwall branches: ${branches.join(", ")}. If prompted, open https://github.com/login/device in Brave.`);
 console.log("Enter the code shown by Git Credential Manager and authorize your own GitHub account.");
 console.log("Do not enter an account password as a Git password, or paste a token into chat.");
 
@@ -29,7 +37,7 @@ const push = spawnSync("git", [
   "-c", "credential.helper=manager",
   "-c", "credential.gitHubAuthModes=device",
   "-c", "credential.guiPrompt=false",
-  "push", "-u", "origin", "main",
+  "push", "-u", "origin", ...branches,
 ], {
   stdio: "inherit",
   env: {
