@@ -95,6 +95,8 @@ Dockerfile                Multi-stage production build
 
 ## CI and delivery
 
+For the first push from your own Windows terminal, `node scripts/push-github.mjs` handles the sandbox folder ownership check for that command and requests a fresh GitHub device-code sign-in through Git Credential Manager. Open the displayed verification page in your preferred browser. The helper isolates this repository's credential namespace; it does not read credentials, change global Git trust, or erase credentials for other repositories.
+
 Pull requests and pushes to `main` run timing tests, production builds, PostgreSQL integration checks, and browser tests. A second job builds the full Docker image. Successful `main` builds publish `latest` and commit-SHA tags to `ghcr.io/<owner>/<repository>` using GitHub's built-in token.
 
 This is **continuous integration and image delivery**, not deployment to a live hosting service. No deployment host or credentials are configured. The first Actions run must pass before treating the hosted pipeline as verified.
