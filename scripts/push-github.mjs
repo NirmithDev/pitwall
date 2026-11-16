@@ -67,6 +67,8 @@ const push = spawnSync(
     "-c",
     "credential.guiPrompt=false",
     "push",
+    "--follow-tags",
+    "--atomic",
     "-u",
     "origin",
     ...branches,
