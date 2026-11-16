@@ -1,4 +1,4 @@
-# Pitwall — Race Replay Lab
+# Pitwall v1.2 — Race Replay Lab
 
 An independent motorsport replay prototype built with React, TypeScript, ASP.NET Core 10, and PostgreSQL 17. Start with recorded races; later, branch into player-controlled strategy simulations.
 
@@ -9,8 +9,13 @@ An independent motorsport replay prototype built with React, TypeScript, ASP.NET
 - Bundled Monza 2024 and Interlagos 2026 replays. Other sessions import on demand and persist in PostgreSQL.
 - Play/pause, 1×–50× playback, timeline scrubbing, lap jumps, and keyboard controls.
 - Driver focus, last-lap comparisons, and clickable tyre-strategy strips.
-- Original SVG circuit outline with lap-time-based marker interpolation.
+- Original SVG circuit outline, bundled recorded positions for Monza 2024, and on-demand recorded-position upgrades for other races where coverage permits.
 - Interactive circuit map: zoom, drag to pan, selected-driver follow mode, driver visibility, labels/grid controls, and browser-saved layouts per race.
+- Recorded driver trails for the focused comparison pair, split across telemetry gaps and rebuilt when seeking.
+- Shareable replay moments that restore race/time, driver comparison, playback speed, and position source, paused.
+- Up to ten named map layouts per race, alongside the existing saved default view.
+- A custom circuit studio with draggable control points, adjustable rounded corners, undo/redo, ordered sectors, local saves, validated JSON imports/exports, and a marker preview that follows the curves.
+- A strategy what-if lab with two editable plans, robust recent-lap pace sampling, projected time differences, saved scenarios, and JSON exports. This is an explicit experimental model, not a finishing-position predictor.
 - Light/dark themes with a header toggle, system preference on first visit, and a browser-saved choice across races.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.
 - Database migrations, Docker Compose, integration tests, browser tests, and GitHub Actions.
@@ -89,6 +94,14 @@ Use **+ / −** to zoom or **Fit circuit** to reset the camera. Drag the map to 
 
 See [the follow-up plan](docs/FOLLOW-UP-PLAN.md) for the sequence of replay fidelity, custom tracks, strategy, and later upgrades.
 
+### Use the v1.2 tools
+
+The **Replay tools** row opens **Share moment**, **Custom circuit studio**, and **Strategy what-if lab**. See [the v1.2 guide](docs/V1.2.md) for a walkthrough and model limitations.
+
+Choose **Driver trails** beside the position-source selector for 15–60 seconds of recorded history for the visible selected/comparison drivers. Trails do not appear in lap-estimate mode, do not join missing-data intervals, and contain no future samples after a seek.
+
+Open **Drivers & view** to save, load, replace by name, or delete named map layouts. These store camera, visibility, labels, and grid in this browser for this race. **Save layout** still sets the default view used when reopening the race. Named layouts, custom circuits, and strategy scenarios do not yet sync across devices.
+
 Open **Browse races** to search the archive, filter seasons or Sprint/Grand Prix sessions, and select a replay. The default view opens the newest cached race. A first-time import runs in a background queue; progress is visible, closing the library does not cancel the server import, and later visits read the cached replay. The catalog is a list of provider sessions, not a promise that every session has complete telemetry. Missing or unusable timing returns a clear error.
 
 The catalog refreshes automatically when older than 12 hours, checked hourly while the backend runs. **Check for new races** requests an immediate refresh. If the provider is unavailable, the existing catalog and cached races remain available. Imports and catalog refreshes share a single worker gate with paced API requests; multiple server replicas would need a shared queue/rate limiter before scaling ingestion horizontally.
@@ -99,7 +112,21 @@ Import a specific session manually with `node scripts/import-race.mjs --session 
 
 The bundled snapshots were imported from [OpenF1](https://openf1.org/): session **9590** (Monza, 1 September 2024) and **11412** (Interlagos, 8 November 2026). Routine builds and automated tests do not query the provider. Live imports and catalog refreshes require network access.
 
-Lap times, classification messages, stints, and race-control messages are recorded data. **Car movement is interpolated uniformly along a circuit outline using lap duration. It is not GPS playback.** It cannot show true braking points, corner speeds, or on-track separation. The outline comes from one recorded lap's coordinates.
+Lap times, classification messages, stints, and race-control messages are recorded data. The circuit outline comes from one recorded lap's coordinates.
+
+### Recorded-position pilot: Monza 2024
+
+**Position source** defaults to recorded mode when traces are cached. Monza's 20 bundled driver traces contain about 91,000 retained coordinates, using the same UTC origin and spatial projection as the race clock and outline. We retain at most one provider sample per second and linearly smooth between neighboring samples only when they are at most 2.5 seconds apart. Binary search supports playback and seeking in either direction.
+
+OpenF1 describes its locations as approximate. These are not lane-accurate GPS, and the visualization does not establish exact braking points or physical separation. Missing drivers, out-of-frame/invalid samples, and long gaps do not silently become lap estimates: recorded markers disappear and the selected driver's status says **location gap**. Follow mode cannot start without a usable selected-driver location; it holds its previous camera position during a later gap.
+
+**Lap estimate** remains an explicit alternative. It moves markers uniformly around the outline using lap duration, and is the default for races without recorded traces. Switching source does not seek the replay. The selected source currently resets to the race's available default when reopening it; saved map layouts still contain only camera/display preferences.
+
+For other races, choose **Load recorded positions** below the source selector. Imports queue in the background, can take several minutes, and keep the current replay usable. Successful upgrades preserve replay time, driver selection, camera, and bookmarks, then switch the map to recorded mode. Failed or empty coverage keeps the timing replay and offers a retry. Leaving the race stops the browser's wait; the server job continues and a later visit can use the cached result. PostgreSQL retains upgrades across restarts; snapshot mode retains them only for the current API process. An older timing import cannot downgrade a richer cached replay.
+
+The location API uses `POST /api/sessions/{id}/locations` to queue or reconnect to a job and `GET` on the same route to inspect it. Responses expose `queued`, `running`, `completed`, or `failed`; cached location upgrades return completed without a provider request. Duplicate requests share one job per session. Queue capacity is eight, with one active worker.
+
+To rebuild a bundled snapshot, run `node scripts/import-race.mjs --session 9590 --locations`, then rebuild/restart the API. The CLI caches raw location responses under ignored `.cache/provider/` files so interrupted CLI imports can resume. Routine library imports start with timing only; the separate location action upgrades the database without rewriting bundled JSON. Bundled payload revisions also upgrade older PostgreSQL replays without deleting bookmarks. JSON responses are compressed for playback delivery.
 
 Classification messages arrive asynchronously and may temporarily repeat positions; ties use lap progress. Missing timed laps can pause a marker. Last-lap comparisons may compare different lap numbers. The strategy strip deliberately reveals full-race stints.
 
@@ -125,14 +152,14 @@ For the first push from your own Windows terminal, `node scripts/push-github.mjs
 
 Pull requests and configured branch pushes run timing tests, production builds, PostgreSQL integration checks, and browser tests. A second job builds the full Docker image. Successful `main` or `master` builds publish `latest` and commit-SHA tags to `ghcr.io/<owner>/<repository>` using GitHub's built-in token.
 
-This is **continuous integration and image delivery**, not deployment to a live hosting service. No deployment host or credentials are configured. The first Actions run must pass before treating the hosted pipeline as verified.
+This is **continuous integration and image delivery**, not deployment to a live hosting service. No deployment host or credentials are configured. Hosted CI for each new release is verified after its authenticated push.
 
 ## Next milestones
 
-1. Plan the map extension: zoom/pan, driver visibility, focus controls, and custom display settings.
-2. Improve replay fidelity with recorded per-driver location samples and missing-data handling.
-3. Add authentication and private user bookmarks.
-4. Calibrate a strategy model, then add “take control from here” branches with explicit assumptions.
+1. Add measured sector annotations to the recorded-position map where provider coverage supports them.
+2. Extend the custom-track studio with pit-lane geometry and richer simulation previews.
+3. Add authentication and private user bookmarks when cross-device use is needed.
+4. Validate the exploratory strategy model against historical cases, then add traffic and interactive race branches.
 5. Plan upgrades and team progression; car designs, 3D models, and detailed upgrade models are deferred.
 
 The present API is for local development: bookmarks are shared and have no account ownership or authorization. Add accounts, authorization, rate limits, and a production database backup plan before opening a multi-user service.

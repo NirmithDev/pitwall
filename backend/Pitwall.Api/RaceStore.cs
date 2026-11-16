@@ -42,11 +42,11 @@ public sealed class RaceStore
         }
         foreach (var race in races)
         {
-            await using var seed = new NpgsqlCommand("INSERT INTO replay_sessions(id,payload) VALUES (@id,@payload) ON CONFLICT(id) DO NOTHING",conn,tx);
+            await using var seed = new NpgsqlCommand("INSERT INTO replay_sessions(id,payload) VALUES (@id,@payload) ON CONFLICT(id) DO UPDATE SET payload=EXCLUDED.payload,imported_at=now() WHERE COALESCE((replay_sessions.payload->>'schemaVersion')::int,1) < COALESCE((EXCLUDED.payload->>'schemaVersion')::int,1)",conn,tx);
             seed.Parameters.AddWithValue("id",race.Key);seed.Parameters.AddWithValue("payload",NpgsqlDbType.Jsonb,race.Value);await seed.ExecuteNonQueryAsync();
         }
         await tx.CommitAsync();
-        logger.LogInformation("PostgreSQL ready; bundled replay data seeded without overwriting imported sessions.");
+        logger.LogInformation("PostgreSQL ready; bundled replay revisions upgraded while preserving bookmarks.");
     }
     public async Task<bool> ReadyAsync(CancellationToken ct)
     {
@@ -70,10 +70,11 @@ public sealed class RaceStore
     public async Task SaveRaceAsync(string id,string json,CancellationToken ct)
     {
         if(db is not null) {
-            await using var cmd=db.CreateCommand("INSERT INTO replay_sessions(id,payload) VALUES(@id,@payload) ON CONFLICT(id) DO UPDATE SET payload=EXCLUDED.payload,imported_at=now()");
+            await using var cmd=db.CreateCommand("INSERT INTO replay_sessions(id,payload) VALUES(@id,@payload) ON CONFLICT(id) DO UPDATE SET payload=EXCLUDED.payload,imported_at=now() WHERE COALESCE((replay_sessions.payload->>'schemaVersion')::int,1) <= COALESCE((EXCLUDED.payload->>'schemaVersion')::int,1)");
             cmd.Parameters.AddWithValue("id",id);cmd.Parameters.AddWithValue("payload",NpgsqlDbType.Jsonb,json);await cmd.ExecuteNonQueryAsync(ct);
-        } else races[id]=json;
+        } else races.AddOrUpdate(id,json,(_,existing)=>Version(existing)>Version(json)?existing:json);
     }
+    private static int Version(string json){var data=JsonSerializer.Deserialize<JsonElement>(json);return data.TryGetProperty("schemaVersion",out var version)?version.GetInt32():1;}
     public async Task<List<Bookmark>> GetBookmarksAsync(string sessionId,CancellationToken ct)
     {
         if(db is null){lock(gate)return bookmarks.Values.Where(b=>b.SessionId==sessionId).Select(b=>b.Bookmark).OrderBy(b=>b.ElapsedSeconds).ToList();}

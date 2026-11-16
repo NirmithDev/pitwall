@@ -144,6 +144,7 @@ test("map camera and driver settings save per race without leaking to another ci
     page.getByLabel("Background grid", { exact: true }),
   ).not.toBeChecked();
   await page.goto("/?race=session-11412");
+  await page.getByLabel("Position source", { exact: true }).selectOption("lap");
   await expect(page.getByLabel("Map zoom", { exact: true })).toHaveText("100%");
   await expect(
     page.getByTestId("circuit-map").locator("[data-driver]"),

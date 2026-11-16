@@ -80,11 +80,22 @@ try:
     status, race = request('/api/sessions/monza-2024')
     assert status == 200 and len(race['drivers']) == 20 and len(race['laps']) > 1000
     assert len(race['track']) >= 20 and race['totalLaps'] == 53
+    assert race['schemaVersion'] >= 2 and len(race['locations']['traces']) == 20
+    for trace in race['locations']['traces']:
+        samples = trace['samples']
+        assert len(samples) > 1
+        assert all(samples[i][0] < samples[i+1][0] for i in range(len(samples)-1))
+        assert all(0 <= sample[1] <= 800 and 0 <= sample[2] <= 520 for sample in samples)
     assert request('/api/sessions/missing')[0] == 404
     catalog = request('/api/sessions')[1]
     assert len(catalog['sessions']) > 100
     assert catalog['sessions'][0]['year'] >= 2026
     assert request('/api/sessions/missing/import', 'POST')[0] == 404
+    assert request('/api/sessions/missing/locations', 'POST')[0] == 404
+    assert request('/api/sessions/missing/locations')[0] == 404
+    location_job = request('/api/sessions/monza-2024/locations', 'POST')[1]
+    assert location_job['status'] == 'completed' and location_job['kind'] == 'locations'
+    assert request('/api/sessions/monza-2024/locations')[1]['status'] == 'completed'
     assert request('/api/sessions/monza-2024/import', 'POST')[1]['status'] == 'completed'
     imported = None
     if args.cached_session:
@@ -109,8 +120,12 @@ try:
         stop()
         start()
         assert any(b['id'] == bookmark_id for b in request(path)[1]), 'Bookmark must persist across process restart'
+        assert request('/api/sessions/monza-2024/locations')[1]['status'] == 'completed', 'Cached location status must survive restart'
         if imported:
             assert request('/api/sessions/' + args.cached_session)[1] == imported, 'Imported replay must persist across process restart'
+            if imported.get('locations'):
+                assert request('/api/sessions/' + args.cached_session + '/locations')[1]['status'] == 'completed'
+                assert request('/api/sessions/' + args.cached_session + '/locations', 'POST')[0] == 200
     assert request(f'{path}/{bookmark_id}', 'DELETE')[0] == 204
     assert request(f'{path}/{bookmark_id}', 'DELETE')[0] == 404
     bookmark_id = None
