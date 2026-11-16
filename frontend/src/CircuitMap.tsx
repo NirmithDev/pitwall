@@ -9,8 +9,9 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { markerPosition } from "./locations";
+import { markerPosition, recordedTrail } from "./locations";
 import LocationImport from "./LocationImport";
+import MapPresets from "./MapPresets";
 import type { MarkerPosition, PositionSource } from "./locations";
 import type { DriverState, Race } from "./race";
 import {
@@ -32,6 +33,8 @@ export default function CircuitMap({
   elapsed,
   onSelect,
   onUpgrade,
+  source,
+  onSourceChange,
 }: {
   race: Race;
   standings: DriverState[];
@@ -40,14 +43,14 @@ export default function CircuitMap({
   elapsed: number;
   onSelect: (driver: number) => void;
   onUpgrade: (race: Race) => void;
+  source: PositionSource;
+  onSourceChange: (source: PositionSource) => void;
 }) {
   const drivers = race.drivers.map((d) => d.number);
   const recordedAvailable = !!race.locations?.traces.some(
     (t) => t.samples.length > 1,
   );
-  const [source, setSource] = useState<PositionSource>(
-    recordedAvailable ? "recorded" : "lap",
-  );
+  const [trailSeconds, setTrailSeconds] = useState(0);
   const positions = new Map(
     standings.map((state) => [
       state.driver.number,
@@ -90,9 +93,9 @@ export default function CircuitMap({
   const previousAvailability = useRef(recordedAvailable);
   useEffect(() => {
     if (recordedAvailable && !previousAvailability.current) {
-      setLayout(l => ({ ...l, camera: currentCamera.current }));
+      setLayout((l) => ({ ...l, camera: currentCamera.current }));
       setFollowing(false);
-      setSource("recorded");
+      onSourceChange("recorded");
       lastPoint.current = null;
     }
     previousAvailability.current = recordedAvailable;
@@ -204,7 +207,7 @@ export default function CircuitMap({
             value={source}
             onChange={(e) => {
               setLayout((l) => ({ ...l, camera: currentCamera.current }));
-              setSource(e.target.value as PositionSource);
+              onSourceChange(e.target.value as PositionSource);
               setFollowing(false);
               lastPoint.current = null;
             }}
@@ -213,6 +216,20 @@ export default function CircuitMap({
               Recorded positions{recordedAvailable ? "" : " · not loaded"}
             </option>
             <option value="lap">Lap estimate</option>
+          </select>
+        </label>
+        <label>
+          Driver trails
+          <select
+            aria-label="Driver trails"
+            value={trailSeconds}
+            disabled={source !== "recorded"}
+            onChange={(e) => setTrailSeconds(Number(e.target.value))}
+          >
+            <option value="0">Off</option>
+            <option value="15">15 seconds</option>
+            <option value="30">30 seconds</option>
+            <option value="60">60 seconds</option>
           </select>
         </label>
         <span
@@ -233,7 +250,9 @@ export default function CircuitMap({
                 : "location gap"}
         </span>
       </div>
-      {!recordedAvailable && <LocationImport raceId={race.id} onLoaded={onUpgrade} />}
+      {!recordedAvailable && (
+        <LocationImport raceId={race.id} onLoaded={onUpgrade} />
+      )}
       <div className="map-toolbar">
         <div className="camera-tools">
           <button
@@ -306,6 +325,15 @@ export default function CircuitMap({
               <button onClick={() => preset([])}>Hide all</button>
             </div>
           </div>
+          <MapPresets
+            raceId={race.id}
+            drivers={drivers}
+            current={{ ...layout, camera: effective }}
+            onLoad={(next) => {
+              setFollowing(false);
+              setLayout(next);
+            }}
+          />
           <fieldset className="map-driver-options">
             <legend className="sr-only">Visible drivers</legend>
             {race.drivers.map((d) => (
@@ -535,6 +563,28 @@ export default function CircuitMap({
               ? race.circuit.toUpperCase()
               : "CIRCUIT COORDINATES UNAVAILABLE"}
           </text>
+          {source === "recorded" &&
+            trailSeconds > 0 &&
+            race.drivers
+              .filter(
+                (d) =>
+                  visible.has(d.number) &&
+                  (d.number === focused.driver.number ||
+                    d.number === comparison),
+              )
+              .map((d) => (
+                <path
+                  key={`trail-${d.number}`}
+                  data-testid={`trail-${d.number}`}
+                  d={recordedTrail(race, d.number, elapsed, trailSeconds)}
+                  fill="none"
+                  stroke={d.color}
+                  strokeWidth={3 / effective.zoom}
+                  strokeLinecap="round"
+                  opacity=".65"
+                  pointerEvents="none"
+                />
+              ))}
           {standings
             .filter(
               (s) =>

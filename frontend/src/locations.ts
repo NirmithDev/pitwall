@@ -65,3 +65,38 @@ export function markerPosition(
     status: "estimated",
   };
 }
+
+// Reconstruct from the replay clock, rather than accumulating animation history.
+// Seeking backwards cannot leave future points or join a telemetry dropout.
+export function recordedTrail(
+  race: Race,
+  driver: number,
+  seconds: number,
+  window: number,
+): string {
+  const samples = traceFor(race, driver)?.samples;
+  if (!samples?.length || window <= 0 || !Number.isFinite(seconds)) return "";
+  const start = Math.max(0, seconds - Math.min(window, 60)) * 1000;
+  const end = seconds * 1000;
+  let low = 0,
+    high = samples.length;
+  while (low < high) {
+    const middle = (low + high) >>> 1;
+    if (samples[middle][0] <= start) low = middle + 1;
+    else high = middle;
+  }
+  const points: [number, number, number][] = [];
+  const first = recordedPosition(race, driver, start / 1000).point;
+  if (first) points.push([start, ...first]);
+  for (let i = low; i < samples.length && samples[i][0] < end; i++)
+    points.push(samples[i]);
+  const last = recordedPosition(race, driver, seconds).point;
+  if (last && end > start) points.push([end, ...last]);
+  const gap = race.locations?.maxInterpolationGapMs ?? 2500;
+  return points
+    .map(
+      (p, i) =>
+        `${i && p[0] - points[i - 1][0] <= gap ? "L" : "M"}${p[1]},${p[2]}`,
+    )
+    .join(" ");
+}

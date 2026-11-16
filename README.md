@@ -1,4 +1,4 @@
-# Pitwall — Race Replay Lab
+# Pitwall v1.2 — Race Replay Lab
 
 An independent motorsport replay prototype built with React, TypeScript, ASP.NET Core 10, and PostgreSQL 17. Start with recorded races; later, branch into player-controlled strategy simulations.
 
@@ -11,6 +11,11 @@ An independent motorsport replay prototype built with React, TypeScript, ASP.NET
 - Driver focus, last-lap comparisons, and clickable tyre-strategy strips.
 - Original SVG circuit outline, bundled recorded positions for Monza 2024, and on-demand recorded-position upgrades for other races where coverage permits.
 - Interactive circuit map: zoom, drag to pan, selected-driver follow mode, driver visibility, labels/grid controls, and browser-saved layouts per race.
+- Recorded driver trails for the focused comparison pair, split across telemetry gaps and rebuilt when seeking.
+- Shareable replay moments that restore race/time, driver comparison, playback speed, and position source, paused.
+- Up to ten named map layouts per race, alongside the existing saved default view.
+- A custom circuit studio with draggable control points, adjustable rounded corners, undo/redo, ordered sectors, local saves, validated JSON imports/exports, and a marker preview that follows the curves.
+- A strategy what-if lab with two editable plans, robust recent-lap pace sampling, projected time differences, saved scenarios, and JSON exports. This is an explicit experimental model, not a finishing-position predictor.
 - Light/dark themes with a header toggle, system preference on first visit, and a browser-saved choice across races.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.
 - Database migrations, Docker Compose, integration tests, browser tests, and GitHub Actions.
@@ -89,6 +94,14 @@ Use **+ / −** to zoom or **Fit circuit** to reset the camera. Drag the map to 
 
 See [the follow-up plan](docs/FOLLOW-UP-PLAN.md) for the sequence of replay fidelity, custom tracks, strategy, and later upgrades.
 
+### Use the v1.2 tools
+
+The **Replay tools** row opens **Share moment**, **Custom circuit studio**, and **Strategy what-if lab**. See [the v1.2 guide](docs/V1.2.md) for a walkthrough and model limitations.
+
+Choose **Driver trails** beside the position-source selector for 15–60 seconds of recorded history for the visible selected/comparison drivers. Trails do not appear in lap-estimate mode, do not join missing-data intervals, and contain no future samples after a seek.
+
+Open **Drivers & view** to save, load, replace by name, or delete named map layouts. These store camera, visibility, labels, and grid in this browser for this race. **Save layout** still sets the default view used when reopening the race. Named layouts, custom circuits, and strategy scenarios do not yet sync across devices.
+
 Open **Browse races** to search the archive, filter seasons or Sprint/Grand Prix sessions, and select a replay. The default view opens the newest cached race. A first-time import runs in a background queue; progress is visible, closing the library does not cancel the server import, and later visits read the cached replay. The catalog is a list of provider sessions, not a promise that every session has complete telemetry. Missing or unusable timing returns a clear error.
 
 The catalog refreshes automatically when older than 12 hours, checked hourly while the backend runs. **Check for new races** requests an immediate refresh. If the provider is unavailable, the existing catalog and cached races remain available. Imports and catalog refreshes share a single worker gate with paced API requests; multiple server replicas would need a shared queue/rate limiter before scaling ingestion horizontally.
@@ -139,14 +152,14 @@ For the first push from your own Windows terminal, `node scripts/push-github.mjs
 
 Pull requests and configured branch pushes run timing tests, production builds, PostgreSQL integration checks, and browser tests. A second job builds the full Docker image. Successful `main` or `master` builds publish `latest` and commit-SHA tags to `ghcr.io/<owner>/<repository>` using GitHub's built-in token.
 
-This is **continuous integration and image delivery**, not deployment to a live hosting service. No deployment host or credentials are configured. The first Actions run must pass before treating the hosted pipeline as verified.
+This is **continuous integration and image delivery**, not deployment to a live hosting service. No deployment host or credentials are configured. Hosted CI for each new release is verified after its authenticated push.
 
 ## Next milestones
 
-1. Add driver trails and sector annotations to the recorded-position map.
-2. Design a separate custom-track workspace with editable geometry and validation.
+1. Add measured sector annotations to the recorded-position map where provider coverage supports them.
+2. Extend the custom-track studio with pit-lane geometry and richer simulation previews.
 3. Add authentication and private user bookmarks when cross-device use is needed.
-4. Calibrate a strategy model, then add “take control from here” branches with explicit assumptions.
+4. Validate the exploratory strategy model against historical cases, then add traffic and interactive race branches.
 5. Plan upgrades and team progression; car designs, 3D models, and detailed upgrade models are deferred.
 
 The present API is for local development: bookmarks are shared and have no account ownership or authorization. Add accounts, authorization, rate limits, and a production database backup plan before opening a multi-user service.

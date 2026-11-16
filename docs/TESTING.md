@@ -1,6 +1,6 @@
 # Current automated checks
 
-## Playwright: 21 browser scenarios
+## Playwright: 30 browser scenarios
 
 | Area | Coverage |
 | --- | --- |
@@ -18,14 +18,19 @@
 | Themes | Light/dark switching, first-visit system preference, persistence across reload/races, mobile dialogs, and blocked preference storage |
 | Recorded locations | Monza's recorded/estimate toggle preserves time; a deterministic dropout hides markers and resumes on a real sample; unavailable races keep estimates explicit |
 | Location upgrades | Queued/running/completed upgrades preserve time, camera, focus and bookmarks; failed coverage allows replay and retry; leaving a pending import cannot replace the next race |
+| Replay tools | Recorded trails change on seek and stay out of estimate mode; shared links restore paused moments and import uncached races; dialogs contain keyboard focus |
+| Named layouts | Save/load after reload, replace by name, delete, replay-time preservation, mobile light-theme width |
+| Custom circuit studio | Keyboard editing, undo/redo, pointer dragging, invalid-geometry recovery, rounded-corner changes and persistence, local save/load, validated JSON import/export, moving preview, historical replay isolation |
+| Strategy what-if lab | Editable assumptions change results, ordinary numeric typing, scenario save/load, JSON export, insufficient-sample handling, replay isolation, mobile/blocked-storage recovery |
 
 These scenarios run against the production frontend build in Chromium. Historical import transitions/outages are mocked so tests do not depend on the external provider. Cached replay data and bookmark CRUD use the C# API. Each Playwright test receives an isolated browser context.
 
 ## Other checks
 
-- 25 Vitest checks cover replay timing, track interpolation, camera bounds/zoom, saved-layout validation, and recorded sample lookup/smoothing/gaps/seek behavior.
+- 44 Vitest checks cover replay timing, track interpolation, camera bounds/zoom, saved-layout validation, recorded sample lookup/smoothing/gaps/seek behavior, trail clipping, share-link validation, named-layout limits, custom geometry/rounding/import validation, and deterministic strategy math with branch-limited pace sampling.
 - Five Node tests cover historical session filtering, stable identifiers, location clock/projection alignment, invalid coordinates, and coverage gaps.
 - Python integration checks cover the real API, input validation, race-specific bookmarks, SQL migrations, PostgreSQL restart persistence, and bundled trace ordering/bounds. A real cache upgrade was also checked against the development database to verify bookmark preservation.
+- The on-demand Interlagos location job was checked against the live provider: duplicate requests reused one job, 22 traces / 127,688 samples were cached, an existing bookmark remained intact, and the entire payload plus completed location status survived an API restart. This is a manual integration check; CI does not need provider access.
 - GitHub Actions builds the frontend, API, and container and runs the browser suite against bundled data.
 
 ## Run locally

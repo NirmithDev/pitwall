@@ -32,6 +32,13 @@ import type { Bookmark, Race } from "./race";
 import RaceLibrary from "./RaceLibrary";
 import CircuitMap from "./CircuitMap";
 import ThemeToggle from "./ThemeToggle";
+import ShareMoment from "./ShareMoment";
+import TrackEditor from "./TrackEditor";
+import StrategyLab from "./StrategyLab";
+import "./lab.css";
+import { momentLink, readMoment } from "./replay-link";
+import { ensureTiming } from "./import-job";
+import type { PositionSource } from "./locations";
 import type { Catalog } from "./RaceLibrary";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
@@ -72,19 +79,25 @@ function App() {
   const [loadKey, setLoadKey] = useState(0);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [positionSource, setPositionSource] = useState<PositionSource>("lap");
+  const [showTrackEditor, setShowTrackEditor] = useState(false);
+  const [showStrategy, setShowStrategy] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
     setError("");
     api<Catalog>("/api/sessions", { signal: controller.signal })
-      .then((library) => {
+      .then(async (library) => {
         setCatalog(library);
         const requested = new URLSearchParams(window.location.search).get(
           "race",
         );
         const id =
-          library.sessions.find((s) => s.id === requested && s.cached)?.id ??
+          library.sessions.find((s) => s.id === requested)?.id ??
           library.sessions.find((s) => s.cached)?.id ??
           "monza-2024";
+        if (library.sessions.some((s) => s.id === id && !s.cached))
+          await ensureTiming(id, controller.signal);
         return Promise.all([
           api<Race>(`/api/sessions/${id}`, { signal: controller.signal }),
           api<{ storage: string }>("/api/status", {
@@ -99,12 +112,17 @@ function App() {
         setRace(data);
         setStorage(status.storage);
         setBookmarks(saved);
-        setSelected(
-          data.drivers.some((d) => d.number === 16)
-            ? 16
-            : data.drivers[0].number,
+        const params = new URLSearchParams(window.location.search);
+        const moment = readMoment(
+          params.get("race") === data.id ? params : new URLSearchParams(),
+          data,
         );
-        setComparison(data.drivers.some((d) => d.number === 4) ? 4 : null);
+        setElapsed(moment.elapsed);
+        setSelected(moment.driver);
+        setComparison(moment.comparison);
+        setSpeed(moment.speed);
+        setPositionSource(moment.source);
+        setPlaying(false);
       })
       .catch((e) => {
         if (!controller.signal.aborted) setError(e.message);
@@ -138,7 +156,8 @@ function App() {
       if (
         (event.target as HTMLElement).closest("input,select,textarea,button") ||
         showInfo ||
-        showLibrary
+        showLibrary ||
+        document.querySelector("dialog[open]")
       )
         return;
       if (event.code === "Space") {
@@ -156,7 +175,7 @@ function App() {
     }
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [elapsed, seek, showInfo, showLibrary]);
+  }, [elapsed, seek, showInfo, showLibrary, shareLink]);
   useEffect(() => {
     if (!notice) return;
     const id = setTimeout(() => setNotice(""), 4500);
@@ -251,7 +270,7 @@ function App() {
           pitwall<span>╱</span>
         </a>
         <div className="product-label">
-          RACE REPLAY LAB <span className="beta">V0.1</span>
+          RACE REPLAY LAB <span className="beta">V1.2</span>
         </div>
         <div className="topbar-right">
           <ThemeToggle />
@@ -351,6 +370,40 @@ function App() {
             <span className="status-dot" />
           </div>
         </section>
+        <div className="lab-launcher">
+          <span>REPLAY TOOLS</span>
+          <button
+            onClick={() =>
+              setShareLink(
+                momentLink(window.location.href, race.id, {
+                  elapsed,
+                  driver: selected,
+                  comparison,
+                  speed,
+                  source: positionSource,
+                }),
+              )
+            }
+          >
+            Share moment
+          </button>
+          <button
+            onClick={() => {
+              setPlaying(false);
+              setShowTrackEditor(true);
+            }}
+          >
+            Custom circuit studio
+          </button>
+          <button
+            onClick={() => {
+              setPlaying(false);
+              setShowStrategy(true);
+            }}
+          >
+            Strategy what-if lab
+          </button>
+        </div>
         <div className={`workspace ${expanded ? "map-expanded" : ""}`}>
           <aside className="panel leaderboard">
             <div className="panel-heading">
@@ -438,9 +491,15 @@ function App() {
               focused={focused}
               comparison={comparison}
               elapsed={elapsed}
+              source={positionSource}
+              onSourceChange={setPositionSource}
               onUpgrade={(data) => {
-                setRace(current => current?.id === data.id ? data : current);
-                setNotice("Recorded positions loaded. Gaps reflect missing provider coverage.");
+                setRace((current) =>
+                  current?.id === data.id ? data : current,
+                );
+                setNotice(
+                  "Recorded positions loaded. Gaps reflect missing provider coverage.",
+                );
               }}
               onSelect={(number) => {
                 setSelected(number);
@@ -796,6 +855,11 @@ function App() {
           onCatalog={setCatalog}
           onLoaded={(data, saved) => {
             setRace(data);
+            setPositionSource(
+              data.locations?.traces.some((t) => t.samples.length > 1)
+                ? "recorded"
+                : "lap",
+            );
             setBookmarks(saved);
             setElapsed(0);
             setPlaying(false);
@@ -813,6 +877,9 @@ function App() {
             setNotice(`${data.circuit} ${data.year} loaded`);
             const url = new URL(window.location.href);
             url.searchParams.set("race", data.id);
+            ["t", "driver", "compare", "speed", "source"].forEach((key) =>
+              url.searchParams.delete(key),
+            );
             window.history.replaceState({}, "", url);
             setCatalog((c) =>
               c
@@ -825,6 +892,23 @@ function App() {
                 : c,
             );
           }}
+        />
+      )}
+      {shareLink && (
+        <ShareMoment link={shareLink} onClose={() => setShareLink(null)} />
+      )}
+      {showTrackEditor && (
+        <TrackEditor
+          outline={race.track}
+          onClose={() => setShowTrackEditor(false)}
+        />
+      )}
+      {showStrategy && (
+        <StrategyLab
+          race={race}
+          selected={selected}
+          elapsed={elapsed}
+          onClose={() => setShowStrategy(false)}
         />
       )}
       {showInfo && (
