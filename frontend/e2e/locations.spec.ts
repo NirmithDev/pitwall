@@ -90,7 +90,11 @@ test("a recorded-location dropout hides the marker instead of inventing movement
 
 test("races without location traces keep estimates labeled and disable recorded mode", async ({
   page,
+  request,
 }) => {
+  const race = await (await request.get("/api/sessions/session-11412")).json();
+  delete race.locations;
+  await page.route("**/api/sessions/session-11412", route => route.fulfill({ json: race }));
   await page.goto("/?race=session-11412");
   await expect(page.getByLabel("Position source", { exact: true })).toHaveValue(
     "lap",

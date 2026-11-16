@@ -1,6 +1,6 @@
 # Current automated checks
 
-## Playwright: 18 browser scenarios
+## Playwright: 21 browser scenarios
 
 | Area | Coverage |
 | --- | --- |
@@ -17,6 +17,7 @@
 | Mobile | Replay/library/map settings stay within a 390-pixel viewport |
 | Themes | Light/dark switching, first-visit system preference, persistence across reload/races, mobile dialogs, and blocked preference storage |
 | Recorded locations | Monza's recorded/estimate toggle preserves time; a deterministic dropout hides markers and resumes on a real sample; unavailable races keep estimates explicit |
+| Location upgrades | Queued/running/completed upgrades preserve time, camera, focus and bookmarks; failed coverage allows replay and retry; leaving a pending import cannot replace the next race |
 
 These scenarios run against the production frontend build in Chromium. Historical import transitions/outages are mocked so tests do not depend on the external provider. Cached replay data and bookmark CRUD use the C# API. Each Playwright test receives an isolated browser context.
 

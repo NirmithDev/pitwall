@@ -10,6 +10,7 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { markerPosition } from "./locations";
+import LocationImport from "./LocationImport";
 import type { MarkerPosition, PositionSource } from "./locations";
 import type { DriverState, Race } from "./race";
 import {
@@ -30,6 +31,7 @@ export default function CircuitMap({
   comparison,
   elapsed,
   onSelect,
+  onUpgrade,
 }: {
   race: Race;
   standings: DriverState[];
@@ -37,6 +39,7 @@ export default function CircuitMap({
   comparison: number | null;
   elapsed: number;
   onSelect: (driver: number) => void;
+  onUpgrade: (race: Race) => void;
 }) {
   const drivers = race.drivers.map((d) => d.number);
   const recordedAvailable = !!race.locations?.traces.some(
@@ -84,6 +87,16 @@ export default function CircuitMap({
   const visible = new Set(layout.visible);
   const dirty = JSON.stringify(layout) !== saved;
   const previousDriver = useRef(focused.driver.number);
+  const previousAvailability = useRef(recordedAvailable);
+  useEffect(() => {
+    if (recordedAvailable && !previousAvailability.current) {
+      setLayout(l => ({ ...l, camera: currentCamera.current }));
+      setFollowing(false);
+      setSource("recorded");
+      lastPoint.current = null;
+    }
+    previousAvailability.current = recordedAvailable;
+  }, [recordedAvailable]);
   useEffect(() => {
     if (previousDriver.current !== focused.driver.number) {
       setLayout((l) =>
@@ -197,7 +210,7 @@ export default function CircuitMap({
             }}
           >
             <option value="recorded" disabled={!recordedAvailable}>
-              Recorded positions{recordedAvailable ? "" : " · unavailable"}
+              Recorded positions{recordedAvailable ? "" : " · not loaded"}
             </option>
             <option value="lap">Lap estimate</option>
           </select>
@@ -220,6 +233,7 @@ export default function CircuitMap({
                 : "location gap"}
         </span>
       </div>
+      {!recordedAvailable && <LocationImport raceId={race.id} onLoaded={onUpgrade} />}
       <div className="map-toolbar">
         <div className="camera-tools">
           <button

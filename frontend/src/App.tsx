@@ -438,6 +438,10 @@ function App() {
               focused={focused}
               comparison={comparison}
               elapsed={elapsed}
+              onUpgrade={(data) => {
+                setRace(current => current?.id === data.id ? data : current);
+                setNotice("Recorded positions loaded. Gaps reflect missing provider coverage.");
+              }}
               onSelect={(number) => {
                 setSelected(number);
                 if (comparison === number) setComparison(null);

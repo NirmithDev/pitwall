@@ -16,7 +16,9 @@ Implemented on `feature/map-controls`: camera bounds/zoom and layout-validation 
 
 ## 2. Better race understanding
 
-First pilot implemented on `feature/recorded-locations`: Monza 2024 uses approximate recorded driver coordinates, clock-aligned playback, bounded smoothing, explicit gaps, an estimate comparison mode, payload revision upgrades, and compressed delivery. Other races remain timing estimates until the pilot is reviewed.
+First pilot implemented on `feature/recorded-locations`: Monza 2024 uses approximate recorded driver coordinates, clock-aligned playback, bounded smoothing, explicit gaps, an estimate comparison mode, payload revision upgrades, and compressed delivery.
+
+The next increment on `feature/location-imports` adds on-demand upgrades for other races: queued imports, duplicate-request reuse, retryable failures, PostgreSQL caching, and automatic source switching while retaining replay time, driver focus, camera, and bookmarks. Coverage still depends on the provider. Timing-only imports cannot overwrite a richer cached replay. Browser scenarios use deterministic queued/running/completed and failure fixtures.
 
 - Measured per-driver position playback where provider location coverage permits it.
 - Explicit gaps in telemetry and a clear distinction between measured and interpolated movement.
