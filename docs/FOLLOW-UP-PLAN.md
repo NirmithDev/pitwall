@@ -16,24 +16,30 @@ Implemented on `feature/map-controls`: camera bounds/zoom and layout-validation 
 
 ## 2. Better race understanding
 
-First pilot implemented on `feature/recorded-locations`: Monza 2024 uses approximate recorded driver coordinates, clock-aligned playback, bounded smoothing, explicit gaps, an estimate comparison mode, payload revision upgrades, and compressed delivery. Other races remain timing estimates until the pilot is reviewed.
+First pilot implemented on `feature/recorded-locations`: Monza 2024 uses approximate recorded driver coordinates, clock-aligned playback, bounded smoothing, explicit gaps, an estimate comparison mode, payload revision upgrades, and compressed delivery.
+
+The next increment on `feature/location-imports` adds on-demand upgrades for other races: queued imports, duplicate-request reuse, retryable failures, PostgreSQL caching, and automatic source switching while retaining replay time, driver focus, camera, and bookmarks. Coverage still depends on the provider. Timing-only imports cannot overwrite a richer cached replay. Browser scenarios use deterministic queued/running/completed and failure fixtures.
 
 - Measured per-driver position playback where provider location coverage permits it.
 - Explicit gaps in telemetry and a clear distinction between measured and interpolated movement.
 - Sector annotations, driver trails, and shared comparison views, prioritized after trying the first map controls.
 - User accounts and server-saved layouts if cross-device use becomes necessary.
 
-## 3. Custom track workspace — design before implementation
+## 3. Custom track workspace — first studio implemented in v1.2
 
 - A separate editor for fictional tracks: control points, start/finish, sectors, and pit-lane geometry.
 - Versioned track definitions and validation for closed paths and sensible sector ordering.
 - A preview with simple driver markers. Real-race replays keep their recorded circuit identity; custom geometry belongs to a separate simulation workspace.
 
-## 4. Strategy decisions and upgrades — later
+The v1.2 studio implements local save/load, validated JSON import/export, draggable and keyboard-editable control points, undo/redo, start/finish and ordered sectors, and adjustable rounded corners. Preview markers follow the same rounded geometry at a constant synthetic speed. Pit-lane editing, curved racing lines, cloud storage and physical vehicle dynamics remain future work.
+
+## 4. Strategy decisions and upgrades — exploratory model in v1.2; richer simulation later
 
 - First calibrate pace, tyre degradation, pit losses, and traffic against historical data.
 - Then add player decisions, balanced upgrade tradeoffs, and multiplayer seasons.
 - Defer car designs, 3D models, visual part upgrades, and detailed upgrade models until the replay/map experience and simulation assumptions are useful and testable.
+
+The v1.2 lab is an explicit deterministic comparison of two plans for one driver, sampled from recorded laps up to a chosen branch point. Users control pace adjustment, degradation, pit lap/loss and fresh-tyre gain; results include a cumulative difference plot, per-lap totals, local saved scenarios and JSON export. It does not model opponents, traffic, fuel, flags, weather, regulations or finishing positions. Historical validation and a physical/multi-driver model are still required before calling it a race predictor.
 
 ## Branch and validation workflow
 

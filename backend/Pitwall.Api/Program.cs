@@ -23,7 +23,7 @@ app.UseStaticFiles();
 
 app.MapGet("/health", async (RaceStore data, CancellationToken ct) =>
     await data.ReadyAsync(ct) ? Results.Ok(new { status = "healthy", storage = data.Storage }) : Results.StatusCode(503));
-app.MapGet("/api/status", (RaceStore data) => new { storage = data.Storage, bookmarkScope = "shared-local-development", version = "0.2.0" });
+app.MapGet("/api/status", (RaceStore data) => new { storage = data.Storage, bookmarkScope = "shared-local-development", version = "1.2.0" });
 app.MapGet("/api/sessions", async (RaceCatalog catalog, RaceStore store, CancellationToken ct) => {
     var cached = await store.CachedIdsAsync(ct);
     return Results.Ok(new { catalog.Current.RefreshedAt, catalog.Refreshing, catalog.LastError, sessions = catalog.Current.Sessions.Select(s => new { s.Id, s.SessionKey, s.Title, s.Circuit, s.Country, s.CountryCode, s.Year, s.Date, s.Kind, cached = cached.Contains(s.Id) }) });
@@ -42,6 +42,17 @@ app.MapPost("/api/sessions/{id}/import", async (string id, RaceCatalog catalog, 
     return job is null ? Results.Json(new { message = "Import queue is full. Try again shortly." }, statusCode: 429) : Results.Accepted($"/api/sessions/{id}/import", job);
 });
 app.MapGet("/api/sessions/{id}/import", (string id, RaceImports imports) => imports.Get(id) is ImportJob job ? Results.Ok(job) : Results.NotFound());
+app.MapPost("/api/sessions/{id}/locations",async(string id,RaceCatalog catalog,RaceImports imports,RaceStore data,CancellationToken ct)=>{
+    var session=catalog.Current.Sessions.FirstOrDefault(s=>s.Id==id);
+    if(session is null)return Results.NotFound();
+    if(RaceData.HasLocations(await data.GetRaceAsync(id,ct)))return Results.Ok(new ImportJob(id,"completed",null,"locations"));
+    var job=imports.Queue(session,true);
+    return job is null?Results.Json(new{message="Import queue is full. Try again shortly."},statusCode:429):Results.Accepted($"/api/sessions/{id}/locations",job);
+});
+app.MapGet("/api/sessions/{id}/locations",async(string id,RaceImports imports,RaceStore data,CancellationToken ct)=>{
+    if(RaceData.HasLocations(await data.GetRaceAsync(id,ct)))return Results.Ok(new ImportJob(id,"completed",null,"locations"));
+    return imports.Get(id,true) is ImportJob job?Results.Ok(job):Results.NotFound();
+});
 app.MapGet("/api/sessions/{id}/bookmarks", async (string id, RaceStore data, CancellationToken ct) =>
     await data.GetRaceAsync(id, ct) is not null ? Results.Ok(await data.GetBookmarksAsync(id, ct)) : Results.NotFound());
 app.MapPost("/api/sessions/{id}/bookmarks", async (string id, BookmarkInput input, RaceStore data, CancellationToken ct) => {
