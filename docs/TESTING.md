@@ -1,6 +1,6 @@
 # Current automated checks
 
-## Playwright: 30 browser scenarios
+## Playwright: 44 browser scenarios
 
 | Area | Coverage |
 | --- | --- |
@@ -22,15 +22,22 @@
 | Named layouts | Save/load after reload, replace by name, delete, replay-time preservation, mobile light-theme width |
 | Custom circuit studio | Keyboard editing, undo/redo, pointer dragging, invalid-geometry recovery, rounded-corner changes and persistence, local save/load, validated JSON import/export, moving preview, historical replay isolation |
 | Strategy what-if lab | Editable assumptions change results, ordinary numeric typing, scenario save/load, JSON export, insufficient-sample handling, replay isolation, mobile/blocked-storage recovery |
+| Analysis desk | Measured sector/pit views, replay jumps, retrospective vs replay scope, CSV exports, queued enrichment, failure/retry, refresh retaining cached data, mobile light layout |
+| Pace backtest | Past/holdout separation in exports, eligible-window search, invalid-window explanations, branch replay jumps, mobile layout |
+| Circuit race sandbox | Pit entry/service/exit, running order, driver settings, persistent setup/session export, pit validation and undo, keyboard handles, animation, tab isolation and storage/mobile recovery |
+| Sector map | Completed-reference alignment, saved layout preference, no invented coordinates during gaps, hidden markers before coverage or in estimate mode |
+| Tool loading | Studio bundle stays deferred until opened; a failed download returns to a usable replay |
 
 These scenarios run against the production frontend build in Chromium. Historical import transitions/outages are mocked so tests do not depend on the external provider. Cached replay data and bookmark CRUD use the C# API. Each Playwright test receives an isolated browser context.
 
 ## Other checks
 
-- 44 Vitest checks cover replay timing, track interpolation, camera bounds/zoom, saved-layout validation, recorded sample lookup/smoothing/gaps/seek behavior, trail clipping, share-link validation, named-layout limits, custom geometry/rounding/import validation, and deterministic strategy math with branch-limited pace sampling.
-- Five Node tests cover historical session filtering, stable identifiers, location clock/projection alignment, invalid coordinates, and coverage gaps.
+- 61 Vitest checks cover replay timing and indexed boundary/seek behavior, track interpolation, map/layout preferences, recorded sample lookup and sector alignment, trails, share links, named layouts, geometry/rounding/import validation, deterministic strategy math, held-out pace evaluation, and sandbox route/service transitions.
+- Nine Node tests cover catalog filtering, identifiers, location alignment/quality, measured-sector/pit normalization, local environment parsing, bounded ports and connection-string escaping.
+- `Pitwall.StoreChecks` verifies enrichment preservation, downgrade protection, concurrent writes, safe bundle seeding and bookmarks against both in-memory storage and PostgreSQL. It creates uniquely named test rows and removes only those rows.
 - Python integration checks cover the real API, input validation, race-specific bookmarks, SQL migrations, PostgreSQL restart persistence, and bundled trace ordering/bounds. A real cache upgrade was also checked against the development database to verify bookmark preservation.
 - The on-demand Interlagos location job was checked against the live provider: duplicate requests reused one job, 22 traces / 127,688 samples were cached, an existing bookmark remained intact, and the entire payload plus completed location status survived an API restart. This is a manual integration check; CI does not need provider access.
+- Live analysis enrichment added 1,437 Interlagos sector records and 58 pit visits. A hash of all existing location traces and the replay clock origin remained identical, and the verification bookmark survived. Automated checks cover independent enrichment storage and restart persistence without querying the provider.
 - GitHub Actions builds the frontend, API, and container and runs the browser suite against bundled data.
 
 ## Run locally
@@ -39,7 +46,8 @@ From the repository root:
 
 ```powershell
 dotnet build backend/Pitwall.Api/Pitwall.Api.csproj -c Release
-node --test scripts/import-race.test.mjs
+node --test scripts/import-race.test.mjs scripts/local-tools.test.mjs
+dotnet run -c Release --project backend/Pitwall.StoreChecks
 cd frontend
 npm ci
 npm test
@@ -60,3 +68,7 @@ npx playwright show-trace test-results/<failed-test>/trace.zip
 Failures retain screenshots, videos, and traces. The HTML report is generated for every run. CI uploads the report and any failure evidence as the `browser-test-results` artifact for seven days.
 
 Unit discovery lives in `vitest.config.ts`, preventing shell glob expansion from accidentally running Playwright files under Vitest.
+
+## Manual performance check
+
+`node scripts/benchmark-replay.mjs` compares indexed lookups with the local `v1.2.0` tag on bundled Monza. It asserts equality for 1,000 sampled standings frames and 1,000 interpolated track points, then reports the median of three lookup batches. One local Node 24 run measured 87.83 ms before vs 6.14 ms after for 1,000 frames (14.31×). This is a lookup microbenchmark, not end-to-end browser FPS, and timing is deliberately not asserted in CI.
