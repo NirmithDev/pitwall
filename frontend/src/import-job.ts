@@ -1,4 +1,4 @@
-import { request } from "./RaceLibrary";
+import { request } from "./api";
 // Used when a shared replay link opens a session not yet cached on this server.
 export async function ensureTiming(
   id: string,

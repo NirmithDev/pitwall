@@ -43,7 +43,7 @@ jobs:
         run: npm test
         working-directory: frontend
       - name: Test historical catalog filtering
-        run: node --test scripts/import-race.test.mjs
+        run: node --test scripts/import-race.test.mjs scripts/local-tools.test.mjs
       - name: Build frontend
         run: npm run build
         working-directory: frontend
@@ -51,6 +51,10 @@ jobs:
         run: dotnet build backend/Pitwall.Api/Pitwall.Api.csproj -c Release
       - name: Test API against PostgreSQL, including restart persistence
         run: python scripts/test-api.py --postgres
+        env:
+          ConnectionStrings__Pitwall: Host=127.0.0.1;Port=5432;Database=pitwall;Username=pitwall;Password=ci-test-password
+      - name: Verify enrichment storage and concurrent writes
+        run: dotnet run -c Release --project backend/Pitwall.StoreChecks
         env:
           ConnectionStrings__Pitwall: Host=127.0.0.1;Port=5432;Database=pitwall;Username=pitwall;Password=ci-test-password
       - name: Install browser

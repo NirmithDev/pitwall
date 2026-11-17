@@ -1,6 +1,8 @@
-# Pitwall v1.2 — Race Replay Lab
+# Pitwall v1.3 — Race Replay Lab
 
 An independent motorsport replay prototype built with React, TypeScript, ASP.NET Core 10, and PostgreSQL 17. Start with recorded races; later, branch into player-controlled strategy simulations.
+
+[Three-minute demo](docs/DEMO.md) · [v1.3 guide](docs/V1.3.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/FOLLOW-UP-PLAN.md)
 
 ## What works now
 
@@ -16,6 +18,11 @@ An independent motorsport replay prototype built with React, TypeScript, ASP.NET
 - Up to ten named map layouts per race, alongside the existing saved default view.
 - A custom circuit studio with draggable control points, adjustable rounded corners, undo/redo, ordered sectors, local saves, validated JSON imports/exports, and a marker preview that follows the curves.
 - A strategy what-if lab with two editable plans, robust recent-lap pace sampling, projected time differences, saved scenarios, and JSON exports. This is an explicit experimental model, not a finishing-position predictor.
+- A race analysis desk with measured sectors, speed-trap readings, lap-pace charts, observed stint trends, pit-lane/service timing, replay-scope filters and CSV/JSON exports.
+- Approximate sector markers aligned to a completed lap's recorded sector clock and location samples; missing references stay hidden.
+- A held-out pace backtest comparing past-only flat and trend baselines with later recorded laps, with explicit errors and pit-free/data-quality requirements.
+- A circuit race sandbox with editable connected pit lanes, one to six named/coloured drivers, individual pace, scheduled service stops, a simulated running order and browser-saved setups.
+- On-demand tool bundles, recovery from tool download failures, indexed replay lookups, a read-only setup doctor, and a one-command local preview.
 - Light/dark themes with a header toggle, system preference on first visit, and a browser-saved choice across races.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.
 - Database migrations, Docker Compose, integration tests, browser tests, and GitHub Actions.
@@ -35,6 +42,8 @@ Open **http://localhost:8080**. The interface should say **PostgreSQL connected*
 The setup script creates an ignored `.env` with a random development database password. It never overwrites an existing file. The database is published only to `127.0.0.1:55432` and the app only to `127.0.0.1:8080`.
 
 See [the Docker walkthrough](docs/DOCKER.md) to understand images, containers, ports, volumes, logs, and development mode.
+
+For an already-built Windows checkout, `node scripts/doctor.mjs` checks installed tools, build files, database reachability and running previews without printing credentials. `node scripts/preview.mjs` serves the built frontend and API together at **http://127.0.0.1:5080**, reading the same local `.env`. Use `--snapshot` for temporary storage or `--port 5082` for a different local port. It checks prerequisites before starting and recognizes an existing Pitwall process instead of stopping it.
 
 ## Develop with hot reload
 
@@ -100,13 +109,27 @@ The **Replay tools** row opens **Share moment**, **Custom circuit studio**, and 
 
 Choose **Driver trails** beside the position-source selector for 15–60 seconds of recorded history for the visible selected/comparison drivers. Trails do not appear in lap-estimate mode, do not join missing-data intervals, and contain no future samples after a seek.
 
-Open **Drivers & view** to save, load, replace by name, or delete named map layouts. These store camera, visibility, labels, and grid in this browser for this race. **Save layout** still sets the default view used when reopening the race. Named layouts, custom circuits, and strategy scenarios do not yet sync across devices.
+Open **Drivers & view** to save, load, replace by name, or delete named map layouts. These store camera, visibility, labels, grid and sector-marker preferences in this browser for this race. **Save layout** still sets the default view used when reopening the race. Named layouts, custom circuits, and strategy scenarios do not yet sync across devices.
+
+### Use the v1.3 tools
+
+Open **Race analysis desk** for lap pace, measured sector comparison and pit-lane timing. Choose **Replay so far** to exclude later laps, or **Full race** for retrospective analysis. Monza's measured analysis is bundled; other cached races use **Load measured analysis**. A refresh keeps current data available until a replacement succeeds. Missing sectors and stationary stop times remain empty. Pit-lane duration is not net race-time loss.
+
+Under **Drivers & view**, enable **Recorded sector markers** in recorded-position mode. Markers use the first suitable completed reference lap for the selected driver and disappear if timing/location coverage cannot support them. These are approximate crossing coordinates, not surveyed circuit boundaries.
+
+Open **Pace forecast backtest** to train on earlier laps and evaluate a later pit-free window. This checks two simple pace baselines, not the outcome of an unobserved pit decision. In **Custom circuit studio → Circuit race sandbox**, configure a pit lane and driver grid, then run or fast-forward the fictional preview. All geometry and fictional driver settings stay separate from historical replay data.
+
+![Race analysis desk with recorded lap-time comparisons](docs/images/v1.3-analysis.png)
+
+![Custom circuit race sandbox with a connected pit lane and simulated order](docs/images/v1.3-sandbox.png)
 
 Open **Browse races** to search the archive, filter seasons or Sprint/Grand Prix sessions, and select a replay. The default view opens the newest cached race. A first-time import runs in a background queue; progress is visible, closing the library does not cancel the server import, and later visits read the cached replay. The catalog is a list of provider sessions, not a promise that every session has complete telemetry. Missing or unusable timing returns a clear error.
 
 The catalog refreshes automatically when older than 12 hours, checked hourly while the backend runs. **Check for new races** requests an immediate refresh. If the provider is unavailable, the existing catalog and cached races remain available. Imports and catalog refreshes share a single worker gate with paced API requests; multiple server replicas would need a shared queue/rate limiter before scaling ingestion horizontally.
 
 Node 24 runs the ingestion worker alongside C#. The Docker image includes it; local API development requires Node on PATH. SQL migration `002_catalog` persists refreshed catalogs. No provider requests are needed for already cached replay playback.
+
+Measured analysis is an independent enrichment inside the cached replay JSON. It can be loaded/refreshed without replacing timing or map coordinates; concurrent writes preserve analysis, locations and bookmarks. `POST /api/sessions/{id}/analysis` queues enrichment for an already cached race, `GET` on that path reports status, and `POST .../analysis?refresh=true` requests a refresh. The worker uses the same bounded queue and provider pacing as replay imports. The CLI command `node scripts/import-race.mjs --session 9590 --analysis` writes a separate bundle under `data/analysis/`.
 
 Import a specific session manually with `node scripts/import-race.mjs --session 11412`, or refresh the bundled catalog with `node scripts/import-race.mjs --catalog`. These write snapshots into `data/`; rebuild the API afterward to bundle them. Normal UI imports are stored in PostgreSQL instead.
 
@@ -156,10 +179,10 @@ This is **continuous integration and image delivery**, not deployment to a live 
 
 ## Next milestones
 
-1. Add measured sector annotations to the recorded-position map where provider coverage supports them.
-2. Extend the custom-track studio with pit-lane geometry and richer simulation previews.
+1. Add player-triggered pit decisions and tyre changes to the fictional sandbox, then validate more of the strategy assumptions.
+2. Evaluate pace models across multiple historical windows and sessions, retaining data-quality exclusions and failure cases.
 3. Add authentication and private user bookmarks when cross-device use is needed.
-4. Validate the exploratory strategy model against historical cases, then add traffic and interactive race branches.
+4. Add portable sandbox-session imports and richer circuit libraries before multiplayer or public sharing.
 5. Plan upgrades and team progression; car designs, 3D models, and detailed upgrade models are deferred.
 
 The present API is for local development: bookmarks are shared and have no account ownership or authorization. Add accounts, authorization, rate limits, and a production database backup plan before opening a multi-user service.

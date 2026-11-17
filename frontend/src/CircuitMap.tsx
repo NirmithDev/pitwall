@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   Focus,
@@ -12,6 +12,7 @@ import {
 import { markerPosition, recordedTrail } from "./locations";
 import LocationImport from "./LocationImport";
 import MapPresets from "./MapPresets";
+import { sectorReference } from "./sector-map";
 import type { MarkerPosition, PositionSource } from "./locations";
 import type { DriverState, Race } from "./race";
 import {
@@ -59,6 +60,13 @@ export default function CircuitMap({
   );
   const [layout, setLayout] = useState<MapLayout>(() =>
     readLayout(race.id, drivers),
+  );
+  const completedThrough = focused.lastLap
+    ? focused.lastLap.start + focused.lastLap.duration
+    : -1;
+  const sectorMap = useMemo(
+    () => sectorReference(race, focused.driver.number, completedThrough),
+    [race, focused.driver.number, completedThrough],
   );
   const [settings, setSettings] = useState(false),
     [following, setFollowing] = useState(false),
@@ -253,6 +261,13 @@ export default function CircuitMap({
       {!recordedAvailable && (
         <LocationImport raceId={race.id} onLoaded={onUpgrade} />
       )}
+      {layout.sectors && source === "recorded" && (
+        <div className="sector-reference-note" data-testid="sector-reference">
+          {sectorMap
+            ? `Approximate sector crossings · ${focused.driver.code} reference lap ${sectorMap.lap}`
+            : "Sector crossings: no complete recorded reference yet"}
+        </div>
+      )}
       <div className="map-toolbar">
         <div className="camera-tools">
           <button
@@ -366,6 +381,18 @@ export default function CircuitMap({
                 <option value="all">All visible drivers</option>
                 <option value="off">Off</option>
               </select>
+            </label>
+            <label className="map-grid-option">
+              <input
+                type="checkbox"
+                aria-label="Recorded sector markers"
+                checked={layout.sectors}
+                disabled={source !== "recorded" || !race.analysis}
+                onChange={(e) =>
+                  setLayout((l) => ({ ...l, sectors: e.target.checked }))
+                }
+              />
+              Recorded sector markers
             </label>
             <label className="map-grid-option">
               <input
@@ -585,6 +612,37 @@ export default function CircuitMap({
                   pointerEvents="none"
                 />
               ))}
+          {layout.sectors &&
+            source === "recorded" &&
+            sectorMap?.markers.map((marker) => (
+              <g
+                key={marker.sector}
+                data-testid={`sector-crossing-${marker.sector}`}
+                transform={`translate(${marker.point}) scale(${1 / effective.zoom})`}
+                pointerEvents="none"
+              >
+                <circle
+                  r="8"
+                  fill="var(--panel)"
+                  stroke="#bd8bff"
+                  strokeWidth="2"
+                />
+                <text
+                  x="12"
+                  y="-10"
+                  fill="#bd8bff"
+                  fontSize="11"
+                  fontFamily="monospace"
+                >
+                  S{marker.sector}
+                </text>
+                <title>
+                  Approximate sector {marker.sector} crossing ·{" "}
+                  {focused.driver.code} reference lap {sectorMap.lap}. Recorded
+                  sector clock aligned to approximate provider coordinates.
+                </title>
+              </g>
+            ))}
           {standings
             .filter(
               (s) =>
