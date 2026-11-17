@@ -84,6 +84,8 @@ The PowerShell helper reads the ignored `.env` and builds the API connection str
 
 ## Common issues
 
+Run `node scripts/doctor.mjs` for a read-only check of installed tools, built files, the database TCP port and active Pitwall previews. For a built checkout, `node scripts/preview.mjs` starts the combined frontend/API preview after checking prerequisites; `--snapshot` uses temporary storage. This helper does not start or reconfigure Docker.
+
 - **Cannot connect to the Docker engine:** open Docker Desktop and wait for the engine to start; `docker info` should contain a Server section.
 - **Database authentication fails after editing `.env`:** PostgreSQL's image initializes credentials only when its volume is empty. Editing the file does not change an existing database user's password. Restore the original local password or intentionally update the database user.
 - **Port already allocated:** change the corresponding host port in `.env`, then run `docker compose up -d` again.

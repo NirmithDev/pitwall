@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -8,6 +9,7 @@ public sealed class RaceStore
     private readonly NpgsqlDataSource? db;
     private readonly ILogger<RaceStore> logger;
     private readonly ConcurrentDictionary<string,string> races = new();
+    private readonly Dictionary<string,string> bundledAnalysis = [];
     private readonly Dictionary<Guid,(string SessionId, Bookmark Bookmark)> bookmarks = [];
     private readonly object gate = new();
     public string Storage => db is null ? "snapshot" : "postgresql";
@@ -21,6 +23,11 @@ public sealed class RaceStore
             var json = File.ReadAllText(file);
             var data = JsonSerializer.Deserialize<JsonElement>(json);
             if (data.TryGetProperty("id", out var id)) races[id.GetString()!] = json;
+        }
+        var analysisDirectory=Path.Combine(AppContext.BaseDirectory,"Data","Analysis");
+        if(Directory.Exists(analysisDirectory))foreach(var file in Directory.GetFiles(analysisDirectory,"*.json")) {
+            var json=File.ReadAllText(file);var data=JsonSerializer.Deserialize<JsonElement>(json);var id=data.GetProperty("id").GetString()!;
+            if(races.TryGetValue(id,out var race)){bundledAnalysis[id]=json;races[id]=AttachAnalysis(race,json);}
         }
     }
     public async Task InitializeAsync()
@@ -42,10 +49,11 @@ public sealed class RaceStore
         }
         foreach (var race in races)
         {
-            await using var seed = new NpgsqlCommand("INSERT INTO replay_sessions(id,payload) VALUES (@id,@payload) ON CONFLICT(id) DO UPDATE SET payload=EXCLUDED.payload,imported_at=now() WHERE COALESCE((replay_sessions.payload->>'schemaVersion')::int,1) < COALESCE((EXCLUDED.payload->>'schemaVersion')::int,1)",conn,tx);
+            await using var seed = new NpgsqlCommand("INSERT INTO replay_sessions(id,payload) VALUES (@id,@payload) ON CONFLICT(id) DO UPDATE SET payload=EXCLUDED.payload || CASE WHEN replay_sessions.payload ? 'analysis' THEN jsonb_build_object('analysis',replay_sessions.payload->'analysis') ELSE '{}'::jsonb END,imported_at=now() WHERE COALESCE((replay_sessions.payload->>'schemaVersion')::int,1) < COALESCE((EXCLUDED.payload->>'schemaVersion')::int,1)",conn,tx);
             seed.Parameters.AddWithValue("id",race.Key);seed.Parameters.AddWithValue("payload",NpgsqlDbType.Jsonb,race.Value);await seed.ExecuteNonQueryAsync();
         }
         await tx.CommitAsync();
+        foreach(var item in bundledAnalysis)await SaveAnalysisAsync(item.Key,item.Value,CancellationToken.None,true);
         logger.LogInformation("PostgreSQL ready; bundled replay revisions upgraded while preserving bookmarks.");
     }
     public async Task<bool> ReadyAsync(CancellationToken ct)
@@ -70,9 +78,19 @@ public sealed class RaceStore
     public async Task SaveRaceAsync(string id,string json,CancellationToken ct)
     {
         if(db is not null) {
-            await using var cmd=db.CreateCommand("INSERT INTO replay_sessions(id,payload) VALUES(@id,@payload) ON CONFLICT(id) DO UPDATE SET payload=EXCLUDED.payload,imported_at=now() WHERE COALESCE((replay_sessions.payload->>'schemaVersion')::int,1) <= COALESCE((EXCLUDED.payload->>'schemaVersion')::int,1)");
+            await using var cmd=db.CreateCommand("INSERT INTO replay_sessions(id,payload) VALUES(@id,@payload) ON CONFLICT(id) DO UPDATE SET payload=EXCLUDED.payload || CASE WHEN replay_sessions.payload ? 'analysis' THEN jsonb_build_object('analysis',replay_sessions.payload->'analysis') ELSE '{}'::jsonb END,imported_at=now() WHERE COALESCE((replay_sessions.payload->>'schemaVersion')::int,1) <= COALESCE((EXCLUDED.payload->>'schemaVersion')::int,1)");
             cmd.Parameters.AddWithValue("id",id);cmd.Parameters.AddWithValue("payload",NpgsqlDbType.Jsonb,json);await cmd.ExecuteNonQueryAsync(ct);
-        } else races.AddOrUpdate(id,json,(_,existing)=>Version(existing)>Version(json)?existing:json);
+        } else races.AddOrUpdate(id,json,(_,existing)=>Version(existing)>Version(json)?existing:PreserveAnalysis(existing,json));
+    }
+    private static string AttachAnalysis(string race,string analysis){var data=JsonNode.Parse(race)!;data["analysis"]=JsonNode.Parse(analysis);return data.ToJsonString();}
+    private static string PreserveAnalysis(string existing,string incoming){var data=JsonNode.Parse(existing)!;return data["analysis"] is JsonNode analysis?AttachAnalysis(incoming,analysis.ToJsonString()):incoming;}
+    public async Task SaveAnalysisAsync(string id,string json,CancellationToken ct,bool onlyIfMissing=false)
+    {
+        if(db is not null) {
+            await using var cmd=db.CreateCommand("UPDATE replay_sessions SET payload=jsonb_set(payload,'{analysis}',@analysis),imported_at=now() WHERE id=@id AND (NOT @onlyMissing OR NOT (payload ? 'analysis'))");
+            cmd.Parameters.AddWithValue("id",id);cmd.Parameters.AddWithValue("analysis",NpgsqlDbType.Jsonb,json);cmd.Parameters.AddWithValue("onlyMissing",onlyIfMissing);await cmd.ExecuteNonQueryAsync(ct);
+        } else if(races.TryGetValue(id,out _))races.AddOrUpdate(id,_=>throw new InvalidOperationException("Replay must be cached first."),(_,race)=>onlyIfMissing&&RaceData.HasAnalysis(race)?race:AttachAnalysis(race,json));
+        else throw new InvalidOperationException("Replay must be cached first.");
     }
     private static int Version(string json){var data=JsonSerializer.Deserialize<JsonElement>(json);return data.TryGetProperty("schemaVersion",out var version)?version.GetInt32():1;}
     public async Task<List<Bookmark>> GetBookmarksAsync(string sessionId,CancellationToken ct)

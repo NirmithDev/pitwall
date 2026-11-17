@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import type { Race, Bookmark } from "./race";
+import { request } from "./api";
 export interface Session {
   id: string;
   sessionKey: number;
@@ -26,19 +27,6 @@ export interface Catalog {
   refreshing: boolean;
   lastError: string | null;
   sessions: Session[];
-}
-export async function request<T>(
-  path: string,
-  options?: RequestInit,
-): Promise<T> {
-  const response = await fetch(path, options);
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(
-      body.message ?? `Request failed (${response.status}). Please try again.`,
-    );
-  }
-  return response.status === 204 ? (undefined as T) : response.json();
 }
 export default function RaceLibrary({
   initial,

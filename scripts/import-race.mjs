@@ -143,10 +143,7 @@ export function sampleLocations(
     gaps,
   };
 }
-export async function importRace(
-  sessionKey,
-  { includeLocations = false } = {},
-) {
+async function historicalSession(sessionKey) {
   if (!Number.isSafeInteger(sessionKey) || sessionKey <= 0)
     throw new Error("Invalid session key");
   const query = { session_key: sessionKey };
@@ -160,6 +157,90 @@ export async function importRace(
     throw new Error(
       "Only completed historical Grand Prix and Sprint sessions can be loaded.",
     );
+  return session;
+}
+export const positiveNumber = (value) =>
+  typeof value === "number" && Number.isFinite(value) && value > 0
+    ? value
+    : null;
+export function normalizeAnalysis(sessionKey, rawLaps, rawPit = []) {
+  const seen = new Set();
+  const laps = rawLaps
+    .filter(
+      (l) =>
+        Number.isInteger(l.driver_number) &&
+        Number.isInteger(l.lap_number) &&
+        l.lap_number > 0,
+    )
+    .map((l) => ({
+      driver: l.driver_number,
+      lap: l.lap_number,
+      sectors: [1, 2, 3].map((n) => positiveNumber(l[`duration_sector_${n}`])),
+      speedTrap: positiveNumber(l.st_speed),
+    }))
+    .filter((l) => {
+      const key = `${l.driver}:${l.lap}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => a.driver - b.driver || a.lap - b.lap);
+  const pits = rawPit
+    .filter(
+      (p) =>
+        Number.isInteger(p.driver_number) &&
+        Number.isInteger(p.lap_number) &&
+        p.lap_number > 0,
+    )
+    .map((p) => ({
+      driver: p.driver_number,
+      lap: p.lap_number,
+      date:
+        typeof p.date === "string" && Number.isFinite(Date.parse(p.date))
+          ? p.date
+          : null,
+      laneDuration:
+        positiveNumber(p.lane_duration) ?? positiveNumber(p.pit_duration),
+      stopDuration:
+        typeof p.stop_duration === "number" &&
+        Number.isFinite(p.stop_duration) &&
+        p.stop_duration >= 0
+          ? p.stop_duration
+          : null,
+    }));
+  return {
+    id: sessionId(sessionKey),
+    sessionKey,
+    version: 1,
+    importedAt: new Date().toISOString(),
+    source: "OpenF1",
+    laps,
+    pits,
+  };
+}
+export async function importAnalysis(sessionKey) {
+  await historicalSession(sessionKey);
+  const query = { session_key: sessionKey };
+  const laps = await get("laps", query);
+  let pits = [],
+    pitWarning = null;
+  try {
+    pits = await get("pit", query);
+  } catch {
+    pitWarning =
+      "Pit-lane data could not be loaded; measured sector timing remains available.";
+  }
+  const result = normalizeAnalysis(sessionKey, laps, pits);
+  if (!result.laps.some((l) => l.sectors.some((s) => s !== null)))
+    throw new Error("No measured sector timing is available for this session.");
+  return { ...result, pitWarning };
+}
+export async function importRace(
+  sessionKey,
+  { includeLocations = false } = {},
+) {
+  const session = await historicalSession(sessionKey);
+  const query = { session_key: sessionKey };
   const rawDrivers = await get("drivers", query);
   const rawLaps = await get("laps", query);
   const valid = rawLaps.filter(
@@ -361,25 +442,39 @@ if (
     const args = process.argv.slice(2),
       worker = args.includes("--worker"),
       catalog = args.includes("--catalog"),
+      analysis = args.includes("--analysis"),
       index = args.indexOf("--session");
     locationCache = args.includes("--locations") && !worker;
     const data = catalog
       ? await fetchCatalog()
-      : await importRace(index >= 0 ? Number(args[index + 1]) : 9590, {
-          includeLocations: args.includes("--locations"),
-        });
+      : analysis
+        ? await importAnalysis(index >= 0 ? Number(args[index + 1]) : 9590)
+        : await importRace(index >= 0 ? Number(args[index + 1]) : 9590, {
+            includeLocations: args.includes("--locations"),
+          });
     if (worker) process.stdout.write(JSON.stringify(data));
     else {
       const folder = new URL("../data/", import.meta.url);
       await mkdir(folder, { recursive: true });
+      if (analysis)
+        await mkdir(new URL("analysis/", folder), { recursive: true });
       await writeFile(
-        new URL(catalog ? "catalog.json" : `${data.id}.json`, folder),
+        new URL(
+          catalog
+            ? "catalog.json"
+            : analysis
+              ? `analysis/${data.id}.json`
+              : `${data.id}.json`,
+          folder,
+        ),
         JSON.stringify(data),
       );
       console.log(
         catalog
           ? `Catalog saved: ${data.sessions.length} completed sessions. Latest: ${data.sessions[0].circuit} ${data.sessions[0].date}`
-          : `Saved ${data.id}: ${data.drivers.length} drivers, ${data.laps.length} timed laps.`,
+          : analysis
+            ? `Saved analysis for ${data.id}: ${data.laps.length} sector records.`
+            : `Saved ${data.id}: ${data.drivers.length} drivers, ${data.laps.length} timed laps.`,
       );
     }
   } catch (error) {

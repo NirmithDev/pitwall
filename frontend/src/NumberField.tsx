@@ -28,7 +28,7 @@ export default function NumberField({
     );
     const next = step === 1 ? Math.round(bounded) : bounded;
     setText(String(next));
-    onChange(next);
+    if (next !== value) onChange(next);
   }
   return (
     <input
@@ -44,6 +44,7 @@ export default function NumberField({
         setText(raw);
         const n = Number(raw);
         if (
+          n !== value &&
           raw.trim() &&
           Number.isFinite(n) &&
           n >= min &&

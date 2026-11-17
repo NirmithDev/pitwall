@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   Activity,
   ArrowLeft,
@@ -29,26 +36,23 @@ import {
   standingsAt,
 } from "./race";
 import type { Bookmark, Race } from "./race";
-import RaceLibrary from "./RaceLibrary";
 import CircuitMap from "./CircuitMap";
 import ThemeToggle from "./ThemeToggle";
-import ShareMoment from "./ShareMoment";
-import TrackEditor from "./TrackEditor";
-import StrategyLab from "./StrategyLab";
+import Dialog from "./Dialog";
+import ToolBoundary from "./ToolBoundary";
+import { request as api } from "./api";
+const RaceLibrary = lazy(() => import("./RaceLibrary"));
+const ShareMoment = lazy(() => import("./ShareMoment"));
+const TrackEditor = lazy(() => import("./TrackEditor"));
+const StrategyLab = lazy(() => import("./StrategyLab"));
+const RaceAnalysis = lazy(() => import("./RaceAnalysis"));
+const PaceBacktest = lazy(() => import("./PaceBacktest"));
 import "./lab.css";
 import { momentLink, readMoment } from "./replay-link";
 import { ensureTiming } from "./import-job";
 import type { PositionSource } from "./locations";
 import type { Catalog } from "./RaceLibrary";
 
-async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(path, options);
-  if (!response.ok)
-    throw new Error(
-      `Request failed (${response.status}). Check that the API is running.`,
-    );
-  return response.status === 204 ? (undefined as T) : await response.json();
-}
 function Tyre({ compound }: { compound?: string }) {
   const c = compound ?? "UNKNOWN";
   return (
@@ -83,6 +87,29 @@ function App() {
   const [positionSource, setPositionSource] = useState<PositionSource>("lap");
   const [showTrackEditor, setShowTrackEditor] = useState(false);
   const [showStrategy, setShowStrategy] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [showBacktest, setShowBacktest] = useState(false);
+  const activeTool = showLibrary
+    ? "library"
+    : shareLink
+      ? "share"
+      : showTrackEditor
+        ? "studio"
+        : showStrategy
+          ? "strategy"
+          : showAnalysis
+            ? "analysis"
+            : showBacktest
+              ? "backtest"
+              : "none";
+  const closeTools = () => {
+    setShowLibrary(false);
+    setShareLink(null);
+    setShowTrackEditor(false);
+    setShowStrategy(false);
+    setShowAnalysis(false);
+    setShowBacktest(false);
+  };
   useEffect(() => {
     const controller = new AbortController();
     setError("");
@@ -157,6 +184,11 @@ function App() {
         (event.target as HTMLElement).closest("input,select,textarea,button") ||
         showInfo ||
         showLibrary ||
+        shareLink ||
+        showTrackEditor ||
+        showStrategy ||
+        showAnalysis ||
+        showBacktest ||
         document.querySelector("dialog[open]")
       )
         return;
@@ -175,7 +207,17 @@ function App() {
     }
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [elapsed, seek, showInfo, showLibrary, shareLink]);
+  }, [
+    elapsed,
+    seek,
+    showInfo,
+    showLibrary,
+    shareLink,
+    showTrackEditor,
+    showStrategy,
+    showAnalysis,
+    showBacktest,
+  ]);
   useEffect(() => {
     if (!notice) return;
     const id = setTimeout(() => setNotice(""), 4500);
@@ -270,7 +312,7 @@ function App() {
           pitwall<span>╱</span>
         </a>
         <div className="product-label">
-          RACE REPLAY LAB <span className="beta">V1.2</span>
+          RACE REPLAY LAB <span className="beta">V1.3</span>
         </div>
         <div className="topbar-right">
           <ThemeToggle />
@@ -372,6 +414,22 @@ function App() {
         </section>
         <div className="lab-launcher">
           <span>REPLAY TOOLS</span>
+          <button
+            onClick={() => {
+              setPlaying(false);
+              setShowBacktest(true);
+            }}
+          >
+            Pace forecast backtest
+          </button>
+          <button
+            onClick={() => {
+              setPlaying(false);
+              setShowAnalysis(true);
+            }}
+          >
+            Race analysis desk
+          </button>
           <button
             onClick={() =>
               setShareLink(
@@ -847,70 +905,124 @@ function App() {
           {notice}
         </div>
       )}
-      {showLibrary && (
-        <RaceLibrary
-          initial={catalog}
-          currentId={race.id}
-          onClose={() => setShowLibrary(false)}
-          onCatalog={setCatalog}
-          onLoaded={(data, saved) => {
-            setRace(data);
-            setPositionSource(
-              data.locations?.traces.some((t) => t.samples.length > 1)
-                ? "recorded"
-                : "lap",
-            );
-            setBookmarks(saved);
-            setElapsed(0);
-            setPlaying(false);
-            const driver = data.drivers.some((d) => d.number === 16)
-              ? 16
-              : data.drivers[0].number;
-            setSelected(driver);
-            setComparison(
-              data.drivers.some((d) => d.number === 4) && driver !== 4
-                ? 4
-                : null,
-            );
-            setTab("events");
-            setExpanded(false);
-            setNotice(`${data.circuit} ${data.year} loaded`);
-            const url = new URL(window.location.href);
-            url.searchParams.set("race", data.id);
-            ["t", "driver", "compare", "speed", "source"].forEach((key) =>
-              url.searchParams.delete(key),
-            );
-            window.history.replaceState({}, "", url);
-            setCatalog((c) =>
-              c
-                ? {
-                    ...c,
-                    sessions: c.sessions.map((s) =>
-                      s.id === data.id ? { ...s, cached: true } : s,
-                    ),
-                  }
-                : c,
-            );
-          }}
-        />
-      )}
-      {shareLink && (
-        <ShareMoment link={shareLink} onClose={() => setShareLink(null)} />
-      )}
-      {showTrackEditor && (
-        <TrackEditor
-          outline={race.track}
-          onClose={() => setShowTrackEditor(false)}
-        />
-      )}
-      {showStrategy && (
-        <StrategyLab
-          race={race}
-          selected={selected}
-          elapsed={elapsed}
-          onClose={() => setShowStrategy(false)}
-        />
-      )}
+      <ToolBoundary key={activeTool} onClose={closeTools}>
+        <Suspense
+          fallback={
+            <Dialog
+              title="Opening replay tool"
+              onClose={() => {
+                setShowLibrary(false);
+                setShareLink(null);
+                setShowTrackEditor(false);
+                setShowStrategy(false);
+                setShowAnalysis(false);
+                setShowBacktest(false);
+              }}
+            >
+              <p role="status">Loading replay tool…</p>
+            </Dialog>
+          }
+        >
+          {showLibrary && (
+            <RaceLibrary
+              initial={catalog}
+              currentId={race.id}
+              onClose={() => setShowLibrary(false)}
+              onCatalog={setCatalog}
+              onLoaded={(data, saved) => {
+                setRace(data);
+                setPositionSource(
+                  data.locations?.traces.some((t) => t.samples.length > 1)
+                    ? "recorded"
+                    : "lap",
+                );
+                setBookmarks(saved);
+                setElapsed(0);
+                setPlaying(false);
+                const driver = data.drivers.some((d) => d.number === 16)
+                  ? 16
+                  : data.drivers[0].number;
+                setSelected(driver);
+                setComparison(
+                  data.drivers.some((d) => d.number === 4) && driver !== 4
+                    ? 4
+                    : null,
+                );
+                setTab("events");
+                setExpanded(false);
+                setNotice(`${data.circuit} ${data.year} loaded`);
+                const url = new URL(window.location.href);
+                url.searchParams.set("race", data.id);
+                ["t", "driver", "compare", "speed", "source"].forEach((key) =>
+                  url.searchParams.delete(key),
+                );
+                window.history.replaceState({}, "", url);
+                setCatalog((c) =>
+                  c
+                    ? {
+                        ...c,
+                        sessions: c.sessions.map((s) =>
+                          s.id === data.id ? { ...s, cached: true } : s,
+                        ),
+                      }
+                    : c,
+                );
+              }}
+            />
+          )}
+          {shareLink && (
+            <ShareMoment link={shareLink} onClose={() => setShareLink(null)} />
+          )}
+          {showTrackEditor && (
+            <TrackEditor
+              outline={race.track}
+              onClose={() => setShowTrackEditor(false)}
+            />
+          )}
+          {showAnalysis && (
+            <RaceAnalysis
+              race={race}
+              selected={selected}
+              comparison={comparison}
+              elapsed={elapsed}
+              onClose={() => setShowAnalysis(false)}
+              onUpgrade={(data) =>
+                setRace((current) => (current?.id === data.id ? data : current))
+              }
+              onSeek={(number, time) => {
+                setSelected(number);
+                if (comparison === number) setComparison(null);
+                seek(time);
+                setPlaying(false);
+                setShowAnalysis(false);
+              }}
+            />
+          )}
+          {showBacktest && (
+            <PaceBacktest
+              race={race}
+              selected={selected}
+              elapsed={elapsed}
+              onClose={() => setShowBacktest(false)}
+              onSeek={(number, time) => {
+                setSelected(number);
+                if (comparison === number) setComparison(null);
+                seek(time);
+                setPlaying(false);
+                setShowBacktest(false);
+              }}
+            />
+          )}
+          {showStrategy && (
+            <StrategyLab
+              race={race}
+              selected={selected}
+              elapsed={elapsed}
+              onClose={() => setShowStrategy(false)}
+            />
+          )}
+        </Suspense>
+      </ToolBoundary>
       {showInfo && (
         <div className="modal-backdrop" onClick={() => setShowInfo(false)}>
           <section
