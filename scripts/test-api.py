@@ -96,6 +96,14 @@ try:
     location_job = request('/api/sessions/monza-2024/locations', 'POST')[1]
     assert location_job['status'] == 'completed' and location_job['kind'] == 'locations'
     assert request('/api/sessions/monza-2024/locations')[1]['status'] == 'completed'
+    assert race['analysis']['version'] == 1 and len(race['analysis']['laps']) > 500
+    assert any(all(isinstance(s, (int, float)) and s > 0 for s in lap['sectors']) for lap in race['analysis']['laps'])
+    assert request('/api/sessions/missing/analysis', 'POST')[0] == 404
+    assert request('/api/sessions/missing/analysis')[0] == 404
+    assert request('/api/sessions/monza-2024/analysis', 'POST')[1]['status'] == 'completed'
+    assert request('/api/sessions/monza-2024/analysis')[1]['kind'] == 'analysis'
+    uncached = next(s['id'] for s in catalog['sessions'] if not s['cached'])
+    assert request('/api/sessions/' + uncached + '/analysis', 'POST')[0] == 409
     assert request('/api/sessions/monza-2024/import', 'POST')[1]['status'] == 'completed'
     imported = None
     if args.cached_session:
@@ -121,6 +129,7 @@ try:
         start()
         assert any(b['id'] == bookmark_id for b in request(path)[1]), 'Bookmark must persist across process restart'
         assert request('/api/sessions/monza-2024/locations')[1]['status'] == 'completed', 'Cached location status must survive restart'
+        assert request('/api/sessions/monza-2024')[1]['analysis'] == race['analysis'], 'Measured analysis must survive restart'
         if imported:
             assert request('/api/sessions/' + args.cached_session)[1] == imported, 'Imported replay must persist across process restart'
             if imported.get('locations'):
