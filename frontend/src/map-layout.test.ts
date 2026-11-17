@@ -51,6 +51,7 @@ describe("saved map layouts", () => {
       visible: [16, 4],
       labels: "focus",
       grid: true,
+      sectors: false,
     });
   });
   it("isolates saved preferences by race", () => {

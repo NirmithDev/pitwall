@@ -47,6 +47,29 @@ const race = {
   ],
 } as Race;
 describe("replay timing", () => {
+  it("preserves completion order with overlapping or delayed lap durations and backwards seeks", () => {
+    const overlapping = {
+      ...race,
+      totalLaps: 3,
+      laps: [
+        { driver: 16, lap: 1, start: 0, duration: 100, pitOut: false },
+        { driver: 16, lap: 2, start: 50, duration: 20, pitOut: false },
+        { driver: 16, lap: 3, start: 100, duration: 30, pitOut: false },
+      ],
+    };
+    expect(driverState(overlapping, driver, 110).lastLap?.lap).toBe(2);
+    expect(driverState(overlapping, driver, 60).lastLap).toBeUndefined();
+    expect(driverState(overlapping, driver, 130).lastLap?.lap).toBe(3);
+    expect(driverState(overlapping, driver, 70).lastLap?.lap).toBe(2);
+  });
+  it("indexes each loaded revision separately and resolves equal-time messages in source order", () => {
+    const revised = {
+      ...race,
+      positions: [...race.positions, { driver: 16, time: 80, position: 2 }],
+    };
+    expect(driverState(revised, driver, 80).position).toBe(2);
+    expect(driverState(race, driver, 80).position).toBe(1);
+  });
   it("uses recorded position messages rather than sorting uniform map animation", () => {
     const state = driverState(race, driver, 85);
     expect(state.position).toBe(1);
@@ -74,6 +97,35 @@ describe("replay timing", () => {
   });
 });
 describe("track interpolation", () => {
+  it("handles degenerate paths and invalid progress without non-finite coordinates", () => {
+    expect(
+      pointOnTrack(
+        [
+          [5, 5],
+          [5, 5],
+        ],
+        0.5,
+      ),
+    ).toEqual([5, 5]);
+    expect(
+      pointOnTrack(
+        [
+          [0, 0],
+          [10, 0],
+        ],
+        NaN,
+      ),
+    ).toEqual([0, 0]);
+    expect(
+      pointOnTrack(
+        [
+          [0, 0],
+          [10, 0],
+        ],
+        -0.25,
+      ),
+    ).toEqual([5, 0]);
+  });
   it("interpolates by distance instead of number of GPS samples", () => {
     const p = pointOnTrack(
       [

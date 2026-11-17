@@ -8,6 +8,7 @@ export interface MapLayout {
   visible: number[];
   labels: "focus" | "all" | "off";
   grid: boolean;
+  sectors: boolean;
 }
 export const DEFAULT_CAMERA: Camera = { cx: 400, cy: 260, zoom: 1 };
 const finite = (value: unknown, fallback: number) =>
@@ -62,6 +63,7 @@ export function normalizeLayout(raw: unknown, drivers: number[]): MapLayout {
     labels:
       value.labels === "all" || value.labels === "off" ? value.labels : "focus",
     grid: typeof value.grid === "boolean" ? value.grid : true,
+    sectors: typeof value.sectors === "boolean" ? value.sectors : false,
   };
 }
 export function layoutKey(raceId: string) {
