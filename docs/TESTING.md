@@ -1,5 +1,11 @@
 # Current automated checks
 
+## User guide checks
+
+Run `node scripts/check-docs.mjs` from the repository root. CI runs the same check before application builds. It validates the [handbook](USER-GUIDE.md), stable flow IDs, required flow sections, implementation paths, local links/anchors, UI component classification and product-version metadata.
+
+When changing a flow, update its chapter and `docs/flows.json`, then run `node scripts/update-guide-index.mjs` and the checker. Follow [CONTRIBUTING](../CONTRIBUTING.md). Checks catch structural drift; reviewing the steps against actual behavior remains necessary. Documentation-only changes need this check, without repeating unrelated application suites locally.
+
 ## Playwright: 44 browser scenarios
 
 | Area | Coverage |

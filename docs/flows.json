@@ -1,0 +1,743 @@
+{
+  "schemaVersion": 1,
+  "productVersion": "1.3.0",
+  "lastReviewed": "2026-11-16",
+  "chapters": [
+    {
+      "path": "docs/guide/01-start-library.md",
+      "title": "Start Pitwall and choose a race"
+    },
+    {
+      "path": "docs/guide/02-replay-map.md",
+      "title": "Replay, moments and map controls"
+    },
+    {
+      "path": "docs/guide/03-analysis-strategy.md",
+      "title": "Analysis, hypothetical strategy and backtesting"
+    },
+    {
+      "path": "docs/guide/04-circuit-studio.md",
+      "title": "Design a custom circuit"
+    },
+    {
+      "path": "docs/guide/05-race-sandbox.md",
+      "title": "Configure and run a fictional race"
+    },
+    {
+      "path": "docs/guide/06-maintenance.md",
+      "title": "Storage, validation and keeping the guide current"
+    }
+  ],
+  "sharedComponents": [
+    {
+      "path": "frontend/src/main.tsx",
+      "reason": "React bootstrap entry point; it contains no independent user flow."
+    },
+    {
+      "path": "frontend/src/Dialog.tsx",
+      "reason": "Reusable native dialog focus/close wrapper shared by documented tool flows."
+    },
+    {
+      "path": "frontend/src/NumberField.tsx",
+      "reason": "Reusable bounded numeric editing behavior documented within the tool flows."
+    }
+  ],
+  "flows": [
+    {
+      "id": "START-01",
+      "title": "Run the complete app in Docker",
+      "guide": "docs/guide/01-start-library.md",
+      "anchor": "start-01",
+      "sources": [
+        "frontend/src/App.tsx",
+        "compose.yaml",
+        "Dockerfile",
+        "scripts/setup-env.mjs"
+      ]
+    },
+    {
+      "id": "START-02",
+      "title": "Develop with hot reload",
+      "guide": "docs/guide/01-start-library.md",
+      "anchor": "start-02",
+      "sources": [
+        "frontend/src/App.tsx",
+        "scripts/dev-api.ps1",
+        "frontend/vite.config.ts"
+      ]
+    },
+    {
+      "id": "START-03",
+      "title": "Run an already-built local preview",
+      "guide": "docs/guide/01-start-library.md",
+      "anchor": "start-03",
+      "sources": [
+        "frontend/src/App.tsx",
+        "scripts/preview.mjs",
+        "scripts/local-config.mjs"
+      ]
+    },
+    {
+      "id": "START-04",
+      "title": "Diagnose the local setup",
+      "guide": "docs/guide/01-start-library.md",
+      "anchor": "start-04",
+      "sources": [
+        "frontend/src/App.tsx",
+        "scripts/doctor.mjs"
+      ]
+    },
+    {
+      "id": "START-05",
+      "title": "Choose light or dark mode",
+      "guide": "docs/guide/01-start-library.md",
+      "anchor": "start-05",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/ThemeToggle.tsx",
+        "frontend/index.html"
+      ]
+    },
+    {
+      "id": "START-06",
+      "title": "Recover from a load or tool failure",
+      "guide": "docs/guide/01-start-library.md",
+      "anchor": "start-06",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/ToolBoundary.tsx"
+      ]
+    },
+    {
+      "id": "LIB-01",
+      "title": "Search and filter the race library",
+      "guide": "docs/guide/01-start-library.md",
+      "anchor": "lib-01",
+      "sources": [
+        "frontend/src/RaceLibrary.tsx",
+        "backend/Pitwall.Api/RaceLibrary.cs"
+      ]
+    },
+    {
+      "id": "LIB-02",
+      "title": "Open a cached race",
+      "guide": "docs/guide/01-start-library.md",
+      "anchor": "lib-02",
+      "sources": [
+        "frontend/src/RaceLibrary.tsx",
+        "backend/Pitwall.Api/RaceLibrary.cs"
+      ]
+    },
+    {
+      "id": "LIB-03",
+      "title": "Import an uncached race",
+      "guide": "docs/guide/01-start-library.md",
+      "anchor": "lib-03",
+      "sources": [
+        "frontend/src/RaceLibrary.tsx",
+        "backend/Pitwall.Api/RaceLibrary.cs",
+        "scripts/import-race.mjs",
+        "backend/Pitwall.Api/RaceStore.cs"
+      ]
+    },
+    {
+      "id": "LIB-04",
+      "title": "Check for new completed races",
+      "guide": "docs/guide/01-start-library.md",
+      "anchor": "lib-04",
+      "sources": [
+        "frontend/src/RaceLibrary.tsx",
+        "backend/Pitwall.Api/RaceLibrary.cs",
+        "backend/Pitwall.Api/Program.cs"
+      ]
+    },
+    {
+      "id": "REPLAY-01",
+      "title": "Play, pause and restart",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "replay-01",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/race.ts"
+      ]
+    },
+    {
+      "id": "REPLAY-02",
+      "title": "Seek by time or lap",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "replay-02",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/race.ts"
+      ]
+    },
+    {
+      "id": "REPLAY-03",
+      "title": "Focus and compare drivers",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "replay-03",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/race.ts"
+      ]
+    },
+    {
+      "id": "REPLAY-04",
+      "title": "Revisit a race-control event",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "replay-04",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/race.ts"
+      ]
+    },
+    {
+      "id": "REPLAY-05",
+      "title": "Inspect tyre stints",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "replay-05",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/race.ts"
+      ]
+    },
+    {
+      "id": "REPLAY-06",
+      "title": "Save, revisit and delete a moment",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "replay-06",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/race.ts",
+        "backend/Pitwall.Api/RaceStore.cs"
+      ]
+    },
+    {
+      "id": "REPLAY-07",
+      "title": "Share a replay moment",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "replay-07",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/race.ts",
+        "frontend/src/ShareMoment.tsx",
+        "frontend/src/replay-link.ts",
+        "frontend/src/import-job.ts"
+      ]
+    },
+    {
+      "id": "REPLAY-08",
+      "title": "Read data notes and source limitations",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "replay-08",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/race.ts"
+      ]
+    },
+    {
+      "id": "REPLAY-09",
+      "title": "Expand the circuit workspace",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "replay-09",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/race.ts"
+      ]
+    },
+    {
+      "id": "MAP-01",
+      "title": "Choose recorded or estimated positions",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "map-01",
+      "sources": [
+        "frontend/src/CircuitMap.tsx",
+        "frontend/src/map-layout.ts",
+        "frontend/src/locations.ts"
+      ]
+    },
+    {
+      "id": "MAP-02",
+      "title": "Load recorded positions",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "map-02",
+      "sources": [
+        "frontend/src/CircuitMap.tsx",
+        "frontend/src/map-layout.ts",
+        "frontend/src/LocationImport.tsx",
+        "frontend/src/EnrichmentImport.tsx",
+        "backend/Pitwall.Api/Program.cs",
+        "scripts/import-race.mjs"
+      ]
+    },
+    {
+      "id": "MAP-03",
+      "title": "Zoom, pan and fit",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "map-03",
+      "sources": [
+        "frontend/src/CircuitMap.tsx",
+        "frontend/src/map-layout.ts"
+      ]
+    },
+    {
+      "id": "MAP-04",
+      "title": "Follow the selected driver",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "map-04",
+      "sources": [
+        "frontend/src/CircuitMap.tsx",
+        "frontend/src/map-layout.ts"
+      ]
+    },
+    {
+      "id": "MAP-05",
+      "title": "Choose visible drivers",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "map-05",
+      "sources": [
+        "frontend/src/CircuitMap.tsx",
+        "frontend/src/map-layout.ts"
+      ]
+    },
+    {
+      "id": "MAP-06",
+      "title": "Set labels, grid and defaults",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "map-06",
+      "sources": [
+        "frontend/src/CircuitMap.tsx",
+        "frontend/src/map-layout.ts"
+      ]
+    },
+    {
+      "id": "MAP-07",
+      "title": "Save the default map view",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "map-07",
+      "sources": [
+        "frontend/src/CircuitMap.tsx",
+        "frontend/src/map-layout.ts"
+      ]
+    },
+    {
+      "id": "MAP-08",
+      "title": "Save, load, replace or delete a named layout",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "map-08",
+      "sources": [
+        "frontend/src/CircuitMap.tsx",
+        "frontend/src/map-layout.ts",
+        "frontend/src/MapPresets.tsx",
+        "frontend/src/map-presets.ts"
+      ]
+    },
+    {
+      "id": "MAP-09",
+      "title": "Display recorded driver trails",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "map-09",
+      "sources": [
+        "frontend/src/CircuitMap.tsx",
+        "frontend/src/map-layout.ts",
+        "frontend/src/locations.ts"
+      ]
+    },
+    {
+      "id": "MAP-10",
+      "title": "Display approximate sector crossings",
+      "guide": "docs/guide/02-replay-map.md",
+      "anchor": "map-10",
+      "sources": [
+        "frontend/src/CircuitMap.tsx",
+        "frontend/src/map-layout.ts",
+        "frontend/src/sector-map.ts"
+      ]
+    },
+    {
+      "id": "ANALYSIS-01",
+      "title": "Choose drivers and analysis scope",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "analysis-01",
+      "sources": [
+        "frontend/src/RaceAnalysis.tsx",
+        "frontend/src/analysis.ts"
+      ]
+    },
+    {
+      "id": "ANALYSIS-02",
+      "title": "Interpret pace and stint trends",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "analysis-02",
+      "sources": [
+        "frontend/src/RaceAnalysis.tsx",
+        "frontend/src/analysis.ts"
+      ]
+    },
+    {
+      "id": "ANALYSIS-03",
+      "title": "Compare measured sectors",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "analysis-03",
+      "sources": [
+        "frontend/src/RaceAnalysis.tsx",
+        "frontend/src/analysis.ts"
+      ]
+    },
+    {
+      "id": "ANALYSIS-04",
+      "title": "Inspect measured pit visits",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "analysis-04",
+      "sources": [
+        "frontend/src/RaceAnalysis.tsx",
+        "frontend/src/analysis.ts"
+      ]
+    },
+    {
+      "id": "ANALYSIS-05",
+      "title": "Load or refresh measured analysis",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "analysis-05",
+      "sources": [
+        "frontend/src/RaceAnalysis.tsx",
+        "frontend/src/analysis.ts",
+        "frontend/src/EnrichmentImport.tsx",
+        "backend/Pitwall.Api/RaceStore.cs",
+        "backend/Pitwall.Api/Program.cs",
+        "scripts/import-race.mjs"
+      ]
+    },
+    {
+      "id": "ANALYSIS-06",
+      "title": "Inspect rows and jump back to replay",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "analysis-06",
+      "sources": [
+        "frontend/src/RaceAnalysis.tsx",
+        "frontend/src/analysis.ts"
+      ]
+    },
+    {
+      "id": "ANALYSIS-07",
+      "title": "Export analysis data",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "analysis-07",
+      "sources": [
+        "frontend/src/RaceAnalysis.tsx",
+        "frontend/src/analysis.ts"
+      ]
+    },
+    {
+      "id": "STRATEGY-01",
+      "title": "Choose the hypothetical branch and horizon",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "strategy-01",
+      "sources": [
+        "frontend/src/StrategyLab.tsx",
+        "frontend/src/strategy.ts"
+      ]
+    },
+    {
+      "id": "STRATEGY-02",
+      "title": "Edit Plans A and B",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "strategy-02",
+      "sources": [
+        "frontend/src/StrategyLab.tsx",
+        "frontend/src/strategy.ts"
+      ]
+    },
+    {
+      "id": "STRATEGY-03",
+      "title": "Read the model result",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "strategy-03",
+      "sources": [
+        "frontend/src/StrategyLab.tsx",
+        "frontend/src/strategy.ts"
+      ]
+    },
+    {
+      "id": "STRATEGY-04",
+      "title": "Save and load named scenarios",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "strategy-04",
+      "sources": [
+        "frontend/src/StrategyLab.tsx",
+        "frontend/src/strategy.ts"
+      ]
+    },
+    {
+      "id": "STRATEGY-05",
+      "title": "Delete or export a strategy scenario",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "strategy-05",
+      "sources": [
+        "frontend/src/StrategyLab.tsx",
+        "frontend/src/strategy.ts"
+      ]
+    },
+    {
+      "id": "BACKTEST-01",
+      "title": "Choose past training and future evaluation laps",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "backtest-01",
+      "sources": [
+        "frontend/src/PaceBacktest.tsx",
+        "frontend/src/backtest.ts"
+      ]
+    },
+    {
+      "id": "BACKTEST-02",
+      "title": "Find an eligible sample",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "backtest-02",
+      "sources": [
+        "frontend/src/PaceBacktest.tsx",
+        "frontend/src/backtest.ts"
+      ]
+    },
+    {
+      "id": "BACKTEST-03",
+      "title": "Interpret and export forecast errors",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "backtest-03",
+      "sources": [
+        "frontend/src/PaceBacktest.tsx",
+        "frontend/src/backtest.ts"
+      ]
+    },
+    {
+      "id": "BACKTEST-04",
+      "title": "Open the branch in replay",
+      "guide": "docs/guide/03-analysis-strategy.md",
+      "anchor": "backtest-04",
+      "sources": [
+        "frontend/src/PaceBacktest.tsx",
+        "frontend/src/backtest.ts"
+      ]
+    },
+    {
+      "id": "STUDIO-01",
+      "title": "Start a new circuit or copy an outline",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-01",
+      "sources": [
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/custom-track.ts"
+      ]
+    },
+    {
+      "id": "STUDIO-02",
+      "title": "Add, move and remove control points",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-02",
+      "sources": [
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/custom-track.ts"
+      ]
+    },
+    {
+      "id": "STUDIO-03",
+      "title": "Undo and redo structural edits",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-03",
+      "sources": [
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/custom-track.ts"
+      ]
+    },
+    {
+      "id": "STUDIO-04",
+      "title": "Set start/finish and sector order",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-04",
+      "sources": [
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/custom-track.ts"
+      ]
+    },
+    {
+      "id": "STUDIO-05",
+      "title": "Round circuit corners",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-05",
+      "sources": [
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/custom-track.ts",
+        "frontend/src/rounded-track.ts"
+      ]
+    },
+    {
+      "id": "STUDIO-06",
+      "title": "Run the simple marker preview",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-06",
+      "sources": [
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/custom-track.ts"
+      ]
+    },
+    {
+      "id": "STUDIO-07",
+      "title": "Save and load a circuit",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-07",
+      "sources": [
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/custom-track.ts"
+      ]
+    },
+    {
+      "id": "STUDIO-08",
+      "title": "Delete a saved circuit",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-08",
+      "sources": [
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/custom-track.ts"
+      ]
+    },
+    {
+      "id": "STUDIO-09",
+      "title": "Import or export circuit JSON",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-09",
+      "sources": [
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/custom-track.ts"
+      ]
+    },
+    {
+      "id": "SANDBOX-01",
+      "title": "Enter the sandbox and switch studio views",
+      "guide": "docs/guide/05-race-sandbox.md",
+      "anchor": "sandbox-01",
+      "sources": [
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/sandbox.ts",
+        "frontend/src/TrackEditor.tsx"
+      ]
+    },
+    {
+      "id": "SANDBOX-02",
+      "title": "Configure the grid and driver pace",
+      "guide": "docs/guide/05-race-sandbox.md",
+      "anchor": "sandbox-02",
+      "sources": [
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/sandbox.ts"
+      ]
+    },
+    {
+      "id": "SANDBOX-03",
+      "title": "Attach and edit the pit lane",
+      "guide": "docs/guide/05-race-sandbox.md",
+      "anchor": "sandbox-03",
+      "sources": [
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/sandbox.ts"
+      ]
+    },
+    {
+      "id": "SANDBOX-04",
+      "title": "Run, pause and advance the fictional race",
+      "guide": "docs/guide/05-race-sandbox.md",
+      "anchor": "sandbox-04",
+      "sources": [
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/sandbox.ts"
+      ]
+    },
+    {
+      "id": "SANDBOX-05",
+      "title": "Undo, reset the lane or reset the run",
+      "guide": "docs/guide/05-race-sandbox.md",
+      "anchor": "sandbox-05",
+      "sources": [
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/sandbox.ts"
+      ]
+    },
+    {
+      "id": "SANDBOX-06",
+      "title": "Save and reopen a circuit/race setup",
+      "guide": "docs/guide/05-race-sandbox.md",
+      "anchor": "sandbox-06",
+      "sources": [
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/sandbox.ts",
+        "frontend/src/custom-track.ts"
+      ]
+    },
+    {
+      "id": "SANDBOX-07",
+      "title": "Export a sandbox session",
+      "guide": "docs/guide/05-race-sandbox.md",
+      "anchor": "sandbox-07",
+      "sources": [
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/sandbox.ts"
+      ]
+    },
+    {
+      "id": "OPS-01",
+      "title": "Know where data lives",
+      "guide": "docs/guide/06-maintenance.md",
+      "anchor": "ops-01",
+      "sources": [
+        "README.md",
+        "backend/Pitwall.Api/RaceStore.cs",
+        "frontend/src/map-layout.ts",
+        "frontend/src/custom-track.ts"
+      ]
+    },
+    {
+      "id": "OPS-02",
+      "title": "Validate a change locally",
+      "guide": "docs/guide/06-maintenance.md",
+      "anchor": "ops-02",
+      "sources": [
+        "README.md",
+        "docs/TESTING.md",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "id": "OPS-03",
+      "title": "Publish branches and verify CI",
+      "guide": "docs/guide/06-maintenance.md",
+      "anchor": "ops-03",
+      "sources": [
+        "README.md",
+        "scripts/push-github.mjs",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "id": "OPS-04",
+      "title": "Restart, update or recover the running app",
+      "guide": "docs/guide/06-maintenance.md",
+      "anchor": "ops-04",
+      "sources": [
+        "README.md",
+        "scripts/preview.mjs",
+        "compose.yaml"
+      ]
+    },
+    {
+      "id": "OPS-05",
+      "title": "Update this guide with each behavior change",
+      "guide": "docs/guide/06-maintenance.md",
+      "anchor": "ops-05",
+      "sources": [
+        "README.md",
+        "CONTRIBUTING.md",
+        "AGENTS.md",
+        "scripts/check-docs.mjs",
+        "scripts/update-guide-index.mjs"
+      ]
+    }
+  ]
+}
