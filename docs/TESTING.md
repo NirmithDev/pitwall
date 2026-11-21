@@ -6,7 +6,7 @@ Run `node scripts/check-docs.mjs` from the repository root. CI runs the same che
 
 When changing a flow, update its chapter and `docs/flows.json`, then run `node scripts/update-guide-index.mjs` and the checker. Follow [CONTRIBUTING](../CONTRIBUTING.md). Checks catch structural drift; reviewing the steps against actual behavior remains necessary. Documentation-only changes need this check, without repeating unrelated application suites locally.
 
-## Playwright: 44 browser scenarios
+## Playwright: 46 browser scenarios
 
 | Area | Coverage |
 | --- | --- |
@@ -31,6 +31,7 @@ When changing a flow, update its chapter and `docs/flows.json`, then run `node s
 | Analysis desk | Measured sector/pit views, replay jumps, retrospective vs replay scope, CSV exports, queued enrichment, failure/retry, refresh retaining cached data, mobile light layout |
 | Pace backtest | Past/holdout separation in exports, eligible-window search, invalid-window explanations, branch replay jumps, mobile layout |
 | Circuit race sandbox | Pit entry/service/exit, running order, driver settings, persistent setup/session export, pit validation and undo, keyboard handles, animation, tab isolation and storage/mobile recovery |
+| Race sessions and live calls | Exact finite-race results/frozen clock, reset/distance preservation, cancellation without resetting, entry commitment, next-lap targeting and selected-driver/mobile controls |
 | Sector map | Completed-reference alignment, saved layout preference, no invented coordinates during gaps, hidden markers before coverage or in estimate mode |
 | Tool loading | Studio bundle stays deferred until opened; a failed download returns to a usable replay |
 
@@ -38,7 +39,7 @@ These scenarios run against the production frontend build in Chromium. Historica
 
 ## Other checks
 
-- 61 Vitest checks cover replay timing and indexed boundary/seek behavior, track interpolation, map/layout preferences, recorded sample lookup and sector alignment, trails, share links, named layouts, geometry/rounding/import validation, deterministic strategy math, held-out pace evaluation, and sandbox route/service transitions.
+- 65 Vitest checks cover replay timing and indexed boundary/seek behavior, track interpolation, map/layout preferences, recorded sample lookup and sector alignment, trails, share links, named layouts, geometry/rounding/import validation, deterministic strategy math, held-out pace evaluation, sandbox route/service transitions, setup migration, finish timing/frame invariance, result ordering, cancellation/repeat visits and pit-lane finishes.
 - Nine Node tests cover catalog filtering, identifiers, location alignment/quality, measured-sector/pit normalization, local environment parsing, bounded ports and connection-string escaping.
 - `Pitwall.StoreChecks` verifies enrichment preservation, downgrade protection, concurrent writes, safe bundle seeding and bookmarks against both in-memory storage and PostgreSQL. It creates uniquely named test rows and removes only those rows.
 - Python integration checks cover the real API, input validation, race-specific bookmarks, SQL migrations, PostgreSQL restart persistence, and bundled trace ordering/bounds. A real cache upgrade was also checked against the development database to verify bookmark preservation.

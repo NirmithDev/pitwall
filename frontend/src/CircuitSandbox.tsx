@@ -9,7 +9,10 @@ import {
 } from "./custom-track";
 import NumberField from "./NumberField";
 import {
-  advancePreview,
+  advanceRace,
+  nextPitEntry,
+  pendingPit,
+  raceOrder,
   initialGrid,
   newSandboxDriver,
   parseSandbox,
@@ -33,10 +36,14 @@ export default function CircuitSandbox({
   active: boolean;
 }) {
   const [setup, setSetup] = useState(() => readSandbox(track));
-  const [states, setStates] = useState(() => initialGrid(setup.drivers));
+  const [session, setSession] = useState(() => ({
+    states: initialGrid(setup.drivers), elapsed: 0,
+  }));
+  const { states, elapsed } = session;
+  const complete = states.every((s) => s.phase === "finished");
+  const [controlled, setControlled] = useState(setup.drivers[0].id);
   const [running, setRunning] = useState(false),
-    [speed, setSpeed] = useState(10),
-    [elapsed, setElapsed] = useState(0);
+    [speed, setSpeed] = useState(10);
   const [editing, setEditing] = useState(false),
     [selected, setSelected] = useState(0),
     [message, setMessage] = useState("");
@@ -46,23 +53,21 @@ export default function CircuitSandbox({
   const errors = useMemo(() => validateSandbox(track, setup), [track, setup]),
     valid = !errors.length;
   useEffect(() => {
-    if (!active || !running || !valid) return;
+    if (!active || !running || !valid || complete) return;
     let frame = 0,
       previous = performance.now();
     const tick = (now: number) => {
       const seconds = Math.min((now - previous) / 1000, 0.1) * speed;
       previous = now;
-      setStates((old) =>
-        old.map((s, i) =>
-          advancePreview(s, setup.drivers[i], setup, geometry, seconds),
-        ),
-      );
-      setElapsed((t) => t + seconds);
+      setSession(old => advanceRace(old, setup, geometry, seconds));
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [active, running, speed, setup, geometry, valid]);
+  }, [active, running, speed, setup, geometry, valid, complete]);
+  useEffect(() => {
+    if (complete) setRunning(false);
+  }, [complete]);
   useEffect(() => {
     if (!active) setRunning(false);
   }, [active]);
@@ -71,8 +76,8 @@ export default function CircuitSandbox({
   }, [track.points, track.cornerRadius]);
   function reset(next = setup) {
     setRunning(false);
-    setElapsed(0);
-    setStates(initialGrid(next.drivers));
+    setSession({elapsed: 0, states: initialGrid(next.drivers)});
+    setControlled(id => next.drivers.some(d => d.id === id) ? id : next.drivers[0].id);
   }
   function change(next: SandboxSetup, remember = true) {
     if (remember) setHistory((h) => [...h.slice(-29), setup]);
@@ -94,20 +99,23 @@ export default function CircuitSandbox({
   }
   function advance(seconds: number) {
     setRunning(false);
-    setStates((old) =>
-      old.map((s, i) =>
-        advancePreview(s, setup.drivers[i], setup, geometry, seconds),
-      ),
-    );
-    setElapsed((t) => t + seconds);
+    setSession(old => advanceRace(old, setup, geometry, seconds));
   }
-  const order = [...states].sort((a, b) => {
-    const progress = (s: typeof a) =>
-      s.phase === "track"
-        ? s.raceProgress
-        : s.raceProgress + s.pitProgress * ((setup.exit - setup.entry + 1) % 1);
-    return progress(b) - progress(a);
-  });
+  const order = raceOrder(states, setup);
+  const controlledState = states.find(s => s.id === controlled) ?? states[0];
+  const controlledDriver = setup.drivers.find(d => d.id === controlledState.id)!;
+  const nextEntry = nextPitEntry(controlledState, setup);
+  const pending = pendingPit(controlledState, controlledDriver, setup);
+  function pitCall(queue: boolean) {
+    setSession((old) => ({
+      ...old,
+      states: old.states.map((s) =>
+        s.id === controlledState.id && s.phase === "track"
+          ? { ...s, pitTarget: queue ? nextPitEntry(s, setup) : null }
+          : s,
+      ),
+    }));
+  }
   const box = pointOnRoute(geometry.pit, 0.5);
   return (
     <section aria-label="Circuit race sandbox">
@@ -120,6 +128,11 @@ export default function CircuitSandbox({
         </p>
       </div>
       <div className="sandbox-controls">
+        <label className="lab-field">
+          Race distance (laps)
+          <NumberField label="Race distance laps" min={1} max={50} value={setup.raceLaps}
+            onChange={n => change({...setup, raceLaps: n})} />
+        </label>
         <label className="lab-field">
           Base lap (seconds)
           <NumberField
@@ -419,9 +432,9 @@ export default function CircuitSandbox({
               );
             })}
         </svg>
-        <div className="sandbox-order">
+        <div className="sandbox-order" role="region" aria-label={complete ? "Race results" : "Running order"}>
           <div>
-            <span>SIMULATED ORDER</span>
+            <span>{complete ? "FINAL RESULTS" : "SIMULATED ORDER"}</span>
             <strong data-testid="sandbox-clock">{formatClock(elapsed)}</strong>
           </div>
           {order.map((state, i) => {
@@ -438,35 +451,59 @@ export default function CircuitSandbox({
                 <span>
                   {d.name}
                   <small>
-                    {effective < 0
+                    {state.phase === "finished" ? `FINISHED · ${state.finishTime!.toFixed(3)}s` : effective < 0
                       ? "GRID"
                       : `LAP ${Math.floor(effective) + 1}`}{" "}
-                    · {state.phase.toUpperCase()}
+                    {state.phase !== "finished" && `· ${state.phase.toUpperCase()}`}
                   </small>
                 </span>
-                <small>{state.visited ? "1 STOP" : "0 STOPS"}</small>
+                <small>{state.stops} {state.stops === 1 ? "STOP" : "STOPS"}</small>
               </div>
             );
           })}
         </div>
       </div>
+      <section aria-label="Live pit strategy" className="sandbox-drivers">
+        <h3>Live pit strategy</h3>
+        <p className="lab-note">{complete ? "Race complete" : elapsed === 0 ? "Grid ready" : running ? "Race running" : "Race paused"} · {setup.raceLaps} laps</p>
+        <div className="lab-actions">
+          <label className="lab-field">Your driver
+            <select aria-label="Controlled driver" value={controlledState.id} onChange={e => setControlled(e.target.value)}>
+              {setup.drivers.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </label>
+          <button className="save-button" disabled={!valid || nextEntry === null || editing}
+            onClick={() => pitCall(true)}>
+            {nextEntry !== null && Math.floor(nextEntry) > Math.floor(Math.max(0, controlledState.raceProgress)) ? "Box next lap" : "Box this lap"}
+          </button>
+          <button className="lab-button" disabled={!valid || editing || controlledState.phase !== "track" || pending === null}
+            onClick={() => pitCall(false)}>Cancel pit call</button>
+        </div>
+        <p aria-live="polite" data-testid="pit-call-status">
+          {controlledState.phase === "finished" ? `${controlledDriver.name} has finished.` : controlledState.phase !== "track"
+            ? `${controlledDriver.name} is committed to the pit lane. Service: ${controlledDriver.serviceSeconds} seconds.`
+            : pending !== null ? `${controlledDriver.name}: pit entry queued on lap ${Math.floor(pending) + 1}.`
+            : nextEntry === null ? "No pit entry remains before the finish." : `${controlledDriver.name}: stay out. No pit call queued.`}
+        </p>
+        <p className="lab-note">Live calls keep the clock and positions. After passing entry, the call targets the next lap. Cancel before entry; once in the lane, the visit is committed. Setup edits restart the race.</p>
+      </section>
       <div className="lab-actions">
         <button
           className="save-button"
-          disabled={!valid}
+          disabled={!valid || complete}
           onClick={() => {
             setEditing(false);
             setRunning(!running);
           }}
         >
-          {running ? "Pause sandbox" : "Run sandbox"}
+          {complete ? "Race finished" : running ? "Pause sandbox" : "Run sandbox"}
         </button>
         <button className="lab-button" onClick={() => reset()}>
           Reset sandbox
         </button>
         <button
           className="lab-button"
-          disabled={!valid}
+          disabled={!valid || complete}
           onClick={() => advance(setup.baseLapSeconds)}
         >
           Advance one lap
@@ -649,8 +686,10 @@ export default function CircuitSandbox({
       <p role="status">{message}</p>
       <p className="lab-note">
         Pace offset adds seconds to the base lap. Pit-lane speed is fixed at 35%
-        of each driver's synthetic track speed, with one optional service stop
-        at the lane midpoint. The running order uses simulated circuit progress;
+        of each driver's synthetic track speed. Scheduled and live-called visits
+        use service at the lane midpoint. Every driver finishes the chosen distance;
+        a pit lane spanning the finish counts its mapped crossing. Results use finish time.
+        The running order uses simulated circuit progress;
         it is not a physical race model. Car designs and upgrade models remain
         separate future work.
       </p>
