@@ -24,6 +24,7 @@ The [handbook](docs/USER-GUIDE.md) documents every current user flow: steps, def
 - Approximate sector markers aligned to a completed lap's recorded sector clock and location samples; missing references stay hidden.
 - A held-out pace backtest comparing past-only flat and trend baselines with later recorded laps, with explicit errors and pit-free/data-quality requirements.
 - A circuit race sandbox with editable connected pit lanes, one to six named/coloured drivers, individual pace, scheduled service stops, a simulated running order and browser-saved setups.
+- Finite 1–50 lap fictional races with exact finish times/results, plus selected-driver live pit calls, cancellation before entry and repeat visits. See [race sessions](docs/guide/05-race-sandbox.md#sandbox-08).
 - On-demand tool bundles, recovery from tool download failures, indexed replay lookups, a read-only setup doctor, and a one-command local preview.
 - Light/dark themes with a header toggle, system preference on first visit, and a browser-saved choice across races.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.

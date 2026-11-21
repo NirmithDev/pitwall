@@ -43,7 +43,9 @@ The v1.2 studio implements local save/load, validated JSON import/export, dragga
 
 The v1.2 lab is an explicit deterministic comparison of two plans for one driver, sampled from recorded laps up to a chosen branch point. Users control pace adjustment, degradation, pit lap/loss and fresh-tyre gain; results include a cumulative difference plot, per-lap totals, local saved scenarios and JSON export. It does not model opponents, traffic, fuel, flags, weather, regulations or finishing positions. Historical validation and a physical/multi-driver model are still required before calling it a race predictor.
 
-v1.3 adds held-out pace-baseline evaluation: past-only training within the current stint, later recorded evaluation laps, missing/pit-window exclusions and visible prediction errors. This is a first diagnostic for pace assumptions, not validation of counterfactual pit decisions. Next: benchmark multiple windows, add player-triggered decisions in the fictional sandbox, then evaluate richer models.
+v1.3 adds held-out pace-baseline evaluation: past-only training within the current stint, later recorded evaluation laps, missing/pit-window exclusions and visible prediction errors. This is a first diagnostic for pace assumptions, not validation of counterfactual pit decisions.
+
+The first v1.4 increment implements finite fictional sessions (1–50 laps), deterministic finishing order/times, live selected-driver pit calls, cancellation before entry and repeat visits. See [the current sandbox guide](guide/05-race-sandbox.md). Next increments: explicit game-model tyre tradeoffs, a balanced upgrade budget, then complete session save/resume. These are planned; current setup saves do not restore runtime.
 
 ## Branch and validation workflow
 

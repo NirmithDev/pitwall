@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "productVersion": "1.3.0",
-  "lastReviewed": "2026-11-16",
+  "lastReviewed": "2026-11-21",
   "chapters": [
     {
       "path": "docs/guide/01-start-library.md",
@@ -737,6 +737,30 @@
         "AGENTS.md",
         "scripts/check-docs.mjs",
         "scripts/update-guide-index.mjs"
+      ]
+    },
+    {
+      "id": "SANDBOX-08",
+      "title": "Choose a race distance and read final results",
+      "guide": "docs/guide/05-race-sandbox.md",
+      "anchor": "sandbox-08",
+      "sources": [
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/sandbox.ts",
+        "frontend/src/sandbox.test.ts",
+        "frontend/e2e/sandbox.spec.ts"
+      ]
+    },
+    {
+      "id": "SANDBOX-09",
+      "title": "Make and cancel live pit calls",
+      "guide": "docs/guide/05-race-sandbox.md",
+      "anchor": "sandbox-09",
+      "sources": [
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/sandbox.ts",
+        "frontend/src/sandbox.test.ts",
+        "frontend/e2e/sandbox.spec.ts"
       ]
     }
   ]

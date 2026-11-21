@@ -45,6 +45,7 @@ export interface SandboxDriver {
 }
 export interface SandboxSetup {
   version: 1;
+  raceLaps: number;
   baseLapSeconds: number;
   entry: number;
   exit: number;
@@ -100,6 +101,7 @@ export function sandboxDefaults(track: CustomTrack): SandboxSetup {
   ];
   return {
     version: 1,
+    raceLaps: 10,
     baseLapSeconds: 90,
     entry,
     exit,
@@ -111,10 +113,13 @@ export function parseSandbox(raw: unknown): SandboxSetup {
   if (!raw || typeof raw !== "object")
     throw new Error("Invalid sandbox settings.");
   const r = raw as SandboxSetup;
+  const raceLaps = r.raceLaps === undefined ? 10 : r.raceLaps;
   const range = (n: unknown, min: number, max: number) =>
     typeof n === "number" && Number.isFinite(n) && n >= min && n <= max;
   if (
     r.version !== 1 ||
+    !Number.isInteger(raceLaps) ||
+    !range(raceLaps, 1, 50) ||
     !range(r.baseLapSeconds, 30, 300) ||
     !range(r.entry, 0, 0.99) ||
     !range(r.exit, 0, 0.99) ||
@@ -131,7 +136,7 @@ export function parseSandbox(raw: unknown): SandboxSetup {
     )
   )
     throw new Error(
-      "Use valid pit entry/exit points, 1–12 pit handles and a 30–300 second base lap.",
+      "Use 1–50 race laps, valid pit entry/exit points, 1–12 pit handles and a 30–300 second base lap.",
     );
   if (!Array.isArray(r.drivers) || r.drivers.length < 1 || r.drivers.length > 6)
     throw new Error("Use between one and six drivers.");
@@ -160,6 +165,7 @@ export function parseSandbox(raw: unknown): SandboxSetup {
   }
   return {
     version: 1,
+    raceLaps,
     baseLapSeconds: r.baseLapSeconds,
     entry: r.entry,
     exit: r.exit,
@@ -274,11 +280,15 @@ export function validateSandbox(
 export interface PreviewState {
   id: string;
   raceProgress: number;
-  phase: "track" | "pit" | "service";
+  phase: "track" | "pit" | "service" | "finished";
   pitProgress: number;
   stopRemaining: number;
   serviced: boolean;
   visited: boolean;
+  stops: number;
+  pitTarget?: number | null;
+  finishTime: number | null;
+  finishedInPit: boolean;
 }
 export function initialGrid(drivers: SandboxDriver[]): PreviewState[] {
   return drivers.map((d, i) => ({
@@ -289,7 +299,44 @@ export function initialGrid(drivers: SandboxDriver[]): PreviewState[] {
     stopRemaining: 0,
     serviced: false,
     visited: false,
+    stops: 0,
+    finishTime: null,
+    finishedInPit: false,
   }));
+}
+export function pendingPit(
+  state: PreviewState,
+  driver: SandboxDriver,
+  setup: SandboxSetup,
+): number | null {
+  const target = state.pitTarget === undefined
+    ? (!state.visited && driver.pitLap > 0 ? driver.pitLap - 1 + setup.entry : null)
+    : state.pitTarget;
+  return target !== null && target >= state.raceProgress - 1e-8 && target < setup.raceLaps ? target : null;
+}
+export function nextPitEntry(
+  state: PreviewState,
+  setup: SandboxSetup,
+): number | null {
+  if (state.phase !== "track") return null;
+  let target = Math.floor(Math.max(0, state.raceProgress)) + setup.entry;
+  if (target < state.raceProgress - 1e-9) target += 1;
+  return target < setup.raceLaps ? target : null;
+}
+export function raceOrder(
+  states: PreviewState[],
+  setup: SandboxSetup,
+): PreviewState[] {
+  const progress = (s: PreviewState) =>
+    s.raceProgress + (s.phase === "pit" || s.phase === "service"
+      ? s.pitProgress * ((setup.exit - setup.entry + 1) % 1)
+      : 0);
+  return [...states].sort((a, b) => {
+    if (a.finishTime !== null && b.finishTime !== null) return a.finishTime - b.finishTime;
+    if (a.finishTime !== null) return -1;
+    if (b.finishTime !== null) return 1;
+    return progress(b) - progress(a);
+  });
 }
 export function advancePreview(
   state: PreviewState,
@@ -297,22 +344,36 @@ export function advancePreview(
   setup: SandboxSetup,
   geometry: ReturnType<typeof sandboxGeometry>,
   seconds: number,
+  elapsed = 0,
 ): PreviewState {
   const next = { ...state };
+  if (next.phase === "finished" || !Number.isFinite(seconds) || seconds <= 0) return next;
   let remaining = Math.max(0, seconds);
   const lapSeconds = setup.baseLapSeconds + driver.paceOffset;
+  const finish = (inPit: boolean) => {
+    next.finishTime = elapsed + seconds - remaining;
+    next.finishedInPit = inPit;
+    next.phase = "finished";
+    next.raceProgress = setup.raceLaps;
+    next.pitTarget = null;
+    remaining = 0;
+  };
   for (let guard = 0; remaining > 1e-9 && guard < 12; guard++) {
     if (next.phase === "track") {
-      const target =
-        !next.visited && driver.pitLap > 0
-          ? driver.pitLap - 1 + setup.entry
-          : Infinity;
+      const pit = pendingPit(next, driver, setup);
+      const target = pit ?? setup.raceLaps;
       const until = (target - next.raceProgress) * lapSeconds;
       if (until >= -1e-8 && until <= remaining) {
         next.raceProgress = target;
         remaining -= Math.max(0, until);
+        if (pit === null) {
+          finish(false);
+          break;
+        }
         next.phase = "pit";
         next.pitProgress = 0;
+        next.serviced = false;
+        next.pitTarget = null;
       } else {
         next.raceProgress += remaining / lapSeconds;
         remaining = 0;
@@ -326,7 +387,11 @@ export function advancePreview(
       const speed =
           ((geometry.main.length / lapSeconds) * 0.35) /
           Math.max(1, geometry.pit.length),
-        target = next.serviced ? 1 : 0.5;
+        stopTarget = next.serviced ? 1 : 0.5;
+      const span = (setup.exit - setup.entry + 1) % 1;
+      const finishFraction = (setup.raceLaps - next.raceProgress) / span;
+      const crossesFinish = finishFraction >= next.pitProgress - 1e-9 && finishFraction <= stopTarget + 1e-9;
+      const target = crossesFinish ? Math.min(stopTarget, Math.max(next.pitProgress, finishFraction)) : stopTarget;
       const until = (target - next.pitProgress) / speed;
       if (until > remaining + 1e-8) {
         next.pitProgress += remaining * speed;
@@ -334,6 +399,10 @@ export function advancePreview(
       } else {
         next.pitProgress = target;
         remaining = Math.max(0, remaining - Math.max(0, until));
+        if (crossesFinish) {
+          finish(true);
+          break;
+        }
         if (!next.serviced) {
           next.serviced = true;
           next.phase = "service";
@@ -341,11 +410,8 @@ export function advancePreview(
         } else {
           next.phase = "track";
           next.visited = true;
-          next.raceProgress =
-            driver.pitLap -
-            1 +
-            setup.entry +
-            ((setup.exit - setup.entry + 1) % 1);
+          next.stops += 1;
+          next.raceProgress += span;
         }
       }
     }
@@ -356,7 +422,19 @@ export function previewPoint(
   state: PreviewState,
   geometry: ReturnType<typeof sandboxGeometry>,
 ): Point {
-  return state.phase === "track"
+  return state.phase === "track" || (state.phase === "finished" && !state.finishedInPit)
     ? pointOnRoute(geometry.main, ((state.raceProgress % 1) + 1) % 1)
     : pointOnRoute(geometry.pit, state.pitProgress);
+}
+export function advanceRace(
+  session: {states: PreviewState[]; elapsed: number},
+  setup: SandboxSetup,
+  geometry: ReturnType<typeof sandboxGeometry>,
+  seconds: number,
+) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return session;
+  if (session.states.every(s => s.phase === "finished")) return session;
+  const states = session.states.map((s, i) => advancePreview(s, setup.drivers[i], setup, geometry, seconds, session.elapsed));
+  const finished = states.every(s => s.finishTime !== null);
+  return {states, elapsed: finished ? Math.max(...states.map(s => s.finishTime!)) : session.elapsed + seconds};
 }
