@@ -6,6 +6,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
+      "/api/rooms/live": {target: "http://127.0.0.1:5080", ws: true},
       "/api": "http://127.0.0.1:5080",
       "/health": "http://127.0.0.1:5080",
     },
@@ -14,6 +15,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
+      "/api/rooms/live": {target: "http://127.0.0.1:5080", ws: true},
       "/api": "http://127.0.0.1:5080",
       "/health": "http://127.0.0.1:5080",
     },

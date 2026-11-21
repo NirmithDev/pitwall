@@ -47,6 +47,7 @@ const TrackEditor = lazy(() => import("./TrackEditor"));
 const StrategyLab = lazy(() => import("./StrategyLab"));
 const RaceAnalysis = lazy(() => import("./RaceAnalysis"));
 const PaceBacktest = lazy(() => import("./PaceBacktest"));
+const MultiplayerRooms = lazy(() => import("./MultiplayerRooms"));
 import "./lab.css";
 import { momentLink, readMoment } from "./replay-link";
 import { ensureTiming } from "./import-job";
@@ -89,7 +90,8 @@ function App() {
   const [showStrategy, setShowStrategy] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showBacktest, setShowBacktest] = useState(false);
-  const activeTool = showLibrary
+  const [showRooms, setShowRooms] = useState(() => new URLSearchParams(location.search).has("room"));
+  const activeTool = showRooms ? "rooms" : showLibrary
     ? "library"
     : shareLink
       ? "share"
@@ -103,6 +105,7 @@ function App() {
               ? "backtest"
               : "none";
   const closeTools = () => {
+    setShowRooms(false);
     setShowLibrary(false);
     setShareLink(null);
     setShowTrackEditor(false);
@@ -189,6 +192,7 @@ function App() {
         showStrategy ||
         showAnalysis ||
         showBacktest ||
+        showRooms ||
         document.querySelector("dialog[open]")
       )
         return;
@@ -217,6 +221,7 @@ function App() {
     showStrategy,
     showAnalysis,
     showBacktest,
+    showRooms,
   ]);
   useEffect(() => {
     if (!notice) return;
@@ -414,6 +419,7 @@ function App() {
         </section>
         <div className="lab-launcher">
           <span>REPLAY TOOLS</span>
+          <button onClick={() => {setPlaying(false);setShowRooms(true);}}>Multiplayer rooms</button>
           <button
             onClick={() => {
               setPlaying(false);
@@ -979,6 +985,7 @@ function App() {
               onClose={() => setShowTrackEditor(false)}
             />
           )}
+          {showRooms && <MultiplayerRooms onClose={() => setShowRooms(false)} />}
           {showAnalysis && (
             <RaceAnalysis
               race={race}

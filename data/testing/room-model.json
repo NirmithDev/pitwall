@@ -1,0 +1,331 @@
+{
+  "track": {
+    "version": 1,
+    "id": "room-check",
+    "name": "Shared test circuit",
+    "points": [
+      [
+        150,
+        150
+      ],
+      [
+        400,
+        150
+      ],
+      [
+        650,
+        150
+      ],
+      [
+        650,
+        370
+      ],
+      [
+        400,
+        370
+      ],
+      [
+        150,
+        370
+      ]
+    ],
+    "sectorEnds": [
+      2,
+      4
+    ],
+    "cornerRadius": 28
+  },
+  "setup": {
+    "version": 1,
+    "raceLaps": 3,
+    "baseLapSeconds": 30,
+    "entry": 0.92,
+    "exit": 0.08,
+    "pitControls": [
+      [
+        80,
+        265
+      ],
+      [
+        80,
+        80
+      ],
+      [
+        265,
+        80
+      ]
+    ],
+    "drivers": [
+      {
+        "id": "one",
+        "name": "One",
+        "color": "#ff665d",
+        "paceOffset": 0,
+        "pitLap": 1,
+        "serviceSeconds": 2.5
+      },
+      {
+        "id": "two",
+        "name": "Two",
+        "color": "#6d9fff",
+        "paceOffset": 2,
+        "pitLap": 0,
+        "serviceSeconds": 2.5
+      }
+    ]
+  },
+  "samples": [
+    {
+      "seconds": 28,
+      "elapsed": 28,
+      "states": [
+        {
+          "id": "one",
+          "raceProgress": 0.92,
+          "phase": "pit",
+          "pitProgress": 0.013491303965643416,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        },
+        {
+          "id": "two",
+          "raceProgress": 0.869,
+          "phase": "track",
+          "pitProgress": 0,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        }
+      ],
+      "order": [
+        "one",
+        "two"
+      ]
+    },
+    {
+      "seconds": 4,
+      "elapsed": 32,
+      "states": [
+        {
+          "id": "one",
+          "raceProgress": 0.92,
+          "phase": "pit",
+          "pitProgress": 0.14840434362207805,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        },
+        {
+          "id": "two",
+          "raceProgress": 0.994,
+          "phase": "track",
+          "pitProgress": 0,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        }
+      ],
+      "order": [
+        "two",
+        "one"
+      ]
+    },
+    {
+      "seconds": 4,
+      "elapsed": 36,
+      "states": [
+        {
+          "id": "one",
+          "raceProgress": 0.92,
+          "phase": "pit",
+          "pitProgress": 0.2833173832785127,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        },
+        {
+          "id": "two",
+          "raceProgress": 1.119,
+          "phase": "track",
+          "pitProgress": 0,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        }
+      ],
+      "order": [
+        "two",
+        "one"
+      ]
+    },
+    {
+      "seconds": 4,
+      "elapsed": 40,
+      "states": [
+        {
+          "id": "one",
+          "raceProgress": 0.92,
+          "phase": "pit",
+          "pitProgress": 0.41823042293494733,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        },
+        {
+          "id": "two",
+          "raceProgress": 1.244,
+          "phase": "track",
+          "pitProgress": 0,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        }
+      ],
+      "order": [
+        "two",
+        "one"
+      ]
+    },
+    {
+      "seconds": 5,
+      "elapsed": 45,
+      "states": [
+        {
+          "id": "one",
+          "raceProgress": 0.92,
+          "phase": "pit",
+          "pitProgress": 0.502551072720219,
+          "stopRemaining": 0,
+          "serviced": true,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        },
+        {
+          "id": "two",
+          "raceProgress": 1.40025,
+          "phase": "track",
+          "pitProgress": 0,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        }
+      ],
+      "order": [
+        "two",
+        "one"
+      ]
+    },
+    {
+      "seconds": 35,
+      "elapsed": 80,
+      "states": [
+        {
+          "id": "one",
+          "raceProgress": 1.7550424040586254,
+          "phase": "track",
+          "pitProgress": 1,
+          "stopRemaining": 0,
+          "serviced": true,
+          "visited": true,
+          "stops": 1,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        },
+        {
+          "id": "two",
+          "raceProgress": 2.4939999999999998,
+          "phase": "track",
+          "pitProgress": 0,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": null,
+          "finishedInPit": false
+        }
+      ],
+      "order": [
+        "two",
+        "one"
+      ]
+    },
+    {
+      "seconds": 100,
+      "elapsed": 117.34872787824123,
+      "states": [
+        {
+          "id": "one",
+          "raceProgress": 3,
+          "phase": "finished",
+          "pitProgress": 1,
+          "stopRemaining": 0,
+          "serviced": true,
+          "visited": true,
+          "stops": 1,
+          "pitTarget": null,
+          "finishTime": 117.34872787824123,
+          "finishedInPit": false
+        },
+        {
+          "id": "two",
+          "raceProgress": 3,
+          "phase": "finished",
+          "pitProgress": 0,
+          "stopRemaining": 0,
+          "serviced": false,
+          "visited": false,
+          "stops": 0,
+          "pitTarget": null,
+          "finishTime": 96.19200000000001,
+          "finishedInPit": false
+        }
+      ],
+      "order": [
+        "two",
+        "one"
+      ]
+    }
+  ]
+}

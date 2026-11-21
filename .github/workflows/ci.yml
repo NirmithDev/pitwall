@@ -51,6 +51,8 @@ jobs:
         working-directory: frontend
       - name: Build API
         run: dotnet build backend/Pitwall.Api/Pitwall.Api.csproj -c Release
+      - name: Verify authoritative room simulation and permissions
+        run: dotnet run -c Release --project backend/Pitwall.RoomChecks
       - name: Test API against PostgreSQL, including restart persistence
         run: python scripts/test-api.py --postgres
         env:

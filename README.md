@@ -25,6 +25,7 @@ The [handbook](docs/USER-GUIDE.md) documents every current user flow: steps, def
 - A held-out pace backtest comparing past-only flat and trend baselines with later recorded laps, with explicit errors and pit-free/data-quality requirements.
 - A circuit race sandbox with editable connected pit lanes, one to six named/coloured drivers, individual pace, scheduled service stops, a simulated running order and browser-saved setups.
 - Finite 1–50 lap fictional races with exact finish times/results, plus selected-driver live pit calls, cancellation before entry and repeat visits. See [race sessions](docs/guide/05-race-sandbox.md#sandbox-08).
+- Private multiplayer rooms with a C#-owned simulation clock, SignalR snapshots, guest driver claims/readiness, host controls, live pit calls, reconnect, spectator support, guest removal and driver/host handover. Rooms are temporary and use one API instance. See [the multiplayer guide](docs/guide/07-multiplayer.md).
 - On-demand tool bundles, recovery from tool download failures, indexed replay lookups, a read-only setup doctor, and a one-command local preview.
 - Light/dark themes with a header toggle, system preference on first visit, and a browser-saved choice across races.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.

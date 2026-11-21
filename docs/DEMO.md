@@ -28,7 +28,7 @@ The next session increment also lets you choose **Race distance (laps)**, select
 
 ## Engineering evidence
 
-- [Testing guide](TESTING.md): 65 frontend unit checks, nine Node checks, 46 browser scenarios, real API/database integration and dedicated concurrency checks.
+- [Testing guide](TESTING.md): 66 frontend unit checks, nine Node checks, 49 browser scenarios, real API/database integration and dedicated storage/room concurrency checks.
 - [v1.3 architecture and limitations](V1.3.md): separate recorded/fictional state, independent enrichment, data quality and model assumptions.
 - `node scripts/benchmark-replay.mjs`: reproducible lookup-only comparison against v1.2 with correctness assertions.
 - GitHub Actions builds and tests the application and container; release branches publish an image. Hosting, accounts and multiplayer are later scope.

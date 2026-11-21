@@ -26,6 +26,10 @@
     {
       "path": "docs/guide/06-maintenance.md",
       "title": "Storage, validation and keeping the guide current"
+    },
+    {
+      "path": "docs/guide/07-multiplayer.md",
+      "title": "Private multiplayer races"
     }
   ],
   "sharedComponents": [
@@ -761,6 +765,142 @@
         "frontend/src/sandbox.ts",
         "frontend/src/sandbox.test.ts",
         "frontend/e2e/sandbox.spec.ts"
+      ]
+    },
+    {
+      "id": "ROOM-01",
+      "title": "Create a private race room",
+      "guide": "docs/guide/07-multiplayer.md",
+      "anchor": "room-01",
+      "sources": [
+        "frontend/src/MultiplayerRooms.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/vite.config.ts",
+        "backend/Pitwall.Api/RaceRooms.cs",
+        "backend/Pitwall.Api/RoomSimulation.cs",
+        "backend/Pitwall.Api/Program.cs",
+        "backend/Pitwall.RoomChecks/Program.cs",
+        "frontend/e2e/multiplayer.spec.ts"
+      ]
+    },
+    {
+      "id": "ROOM-02",
+      "title": "Invite friends and join as a guest",
+      "guide": "docs/guide/07-multiplayer.md",
+      "anchor": "room-02",
+      "sources": [
+        "frontend/src/MultiplayerRooms.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/vite.config.ts",
+        "backend/Pitwall.Api/RaceRooms.cs",
+        "backend/Pitwall.Api/RoomSimulation.cs",
+        "backend/Pitwall.Api/Program.cs",
+        "backend/Pitwall.RoomChecks/Program.cs",
+        "frontend/e2e/multiplayer.spec.ts"
+      ]
+    },
+    {
+      "id": "ROOM-03",
+      "title": "Claim a driver, spectate and get ready",
+      "guide": "docs/guide/07-multiplayer.md",
+      "anchor": "room-03",
+      "sources": [
+        "frontend/src/MultiplayerRooms.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/vite.config.ts",
+        "backend/Pitwall.Api/RaceRooms.cs",
+        "backend/Pitwall.Api/RoomSimulation.cs",
+        "backend/Pitwall.Api/Program.cs",
+        "backend/Pitwall.RoomChecks/Program.cs",
+        "frontend/e2e/multiplayer.spec.ts"
+      ]
+    },
+    {
+      "id": "ROOM-04",
+      "title": "Make shared live pit decisions",
+      "guide": "docs/guide/07-multiplayer.md",
+      "anchor": "room-04",
+      "sources": [
+        "frontend/src/MultiplayerRooms.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/vite.config.ts",
+        "backend/Pitwall.Api/RaceRooms.cs",
+        "backend/Pitwall.Api/RoomSimulation.cs",
+        "backend/Pitwall.Api/Program.cs",
+        "backend/Pitwall.RoomChecks/Program.cs",
+        "frontend/e2e/multiplayer.spec.ts"
+      ]
+    },
+    {
+      "id": "ROOM-05",
+      "title": "Control the race as host",
+      "guide": "docs/guide/07-multiplayer.md",
+      "anchor": "room-05",
+      "sources": [
+        "frontend/src/MultiplayerRooms.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/vite.config.ts",
+        "backend/Pitwall.Api/RaceRooms.cs",
+        "backend/Pitwall.Api/RoomSimulation.cs",
+        "backend/Pitwall.Api/Program.cs",
+        "backend/Pitwall.RoomChecks/Program.cs",
+        "frontend/e2e/multiplayer.spec.ts"
+      ]
+    },
+    {
+      "id": "ROOM-06",
+      "title": "Hand over a driver without resetting",
+      "guide": "docs/guide/07-multiplayer.md",
+      "anchor": "room-06",
+      "sources": [
+        "frontend/src/MultiplayerRooms.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/vite.config.ts",
+        "backend/Pitwall.Api/RaceRooms.cs",
+        "backend/Pitwall.Api/RoomSimulation.cs",
+        "backend/Pitwall.Api/Program.cs",
+        "backend/Pitwall.RoomChecks/Program.cs",
+        "frontend/e2e/multiplayer.spec.ts"
+      ]
+    },
+    {
+      "id": "ROOM-07",
+      "title": "Reconnect, leave and remove guests",
+      "guide": "docs/guide/07-multiplayer.md",
+      "anchor": "room-07",
+      "sources": [
+        "frontend/src/MultiplayerRooms.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/vite.config.ts",
+        "backend/Pitwall.Api/RaceRooms.cs",
+        "backend/Pitwall.Api/RoomSimulation.cs",
+        "backend/Pitwall.Api/Program.cs",
+        "backend/Pitwall.RoomChecks/Program.cs",
+        "frontend/e2e/multiplayer.spec.ts"
+      ]
+    },
+    {
+      "id": "ROOM-08",
+      "title": "Run a two-player trial and prepare outside access",
+      "guide": "docs/guide/07-multiplayer.md",
+      "anchor": "room-08",
+      "sources": [
+        "frontend/src/MultiplayerRooms.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/vite.config.ts",
+        "backend/Pitwall.Api/RaceRooms.cs",
+        "backend/Pitwall.Api/RoomSimulation.cs",
+        "backend/Pitwall.Api/Program.cs",
+        "backend/Pitwall.RoomChecks/Program.cs",
+        "frontend/e2e/multiplayer.spec.ts"
       ]
     }
   ]

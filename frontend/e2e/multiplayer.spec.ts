@@ -1,0 +1,110 @@
+import { test, expect } from "@playwright/test";
+import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
+import { newTrack } from "../src/custom-track";
+import { sandboxDefaults } from "../src/sandbox";
+
+test("two guests share one server race, reconnect, hand over control and finish together", async ({page, browser, baseURL}) => {
+  const other = await browser.newContext({baseURL});
+  const guest = await other.newPage();
+  try {
+    await page.goto("/?race=monza-2024&t=120");
+    await page.getByRole("button", {name:"Custom circuit studio",exact:true}).click();
+    await page.getByRole("button", {name:"Circuit race sandbox",exact:true}).click();
+    await page.getByLabel("Sandbox driver count").selectOption("2");
+    await page.getByLabel("Race distance laps",{exact:true}).fill("2");
+    await page.getByLabel("Sandbox base lap seconds",{exact:true}).fill("30");
+    await page.getByRole("button",{name:"Host this setup with friends",exact:true}).click();
+    const host = page.getByRole("dialog",{name:"Multiplayer rooms",exact:true});
+    await host.getByLabel("Guest name",{exact:true}).fill("Alpha");
+    await host.getByRole("button",{name:"Create private room",exact:true}).click();
+    await expect(host.getByRole("status",{exact:true})).toHaveText("Connected");
+    const code = await host.getByTestId("room-code").innerText();
+    await guest.goto(`/?room=${code}`);
+    const join = guest.getByRole("dialog",{name:"Multiplayer rooms",exact:true});
+    await join.getByLabel("Guest name",{exact:true}).fill("Bravo");
+    await join.getByRole("button",{name:"Join room",exact:true}).click();
+    await expect(join.getByRole("status",{exact:true})).toHaveText("Connected");
+    await host.getByRole("button",{name:"Claim Driver 1",exact:true}).click();
+    await join.getByRole("button",{name:"Claim Driver 2",exact:true}).click();
+    await host.getByRole("button",{name:"Start shared race",exact:true}).click();
+    await expect(host.getByRole("alert")).toContainText("ready");
+    await host.getByRole("button",{name:"Cancel shared pit call",exact:true}).click();
+    await host.getByRole("button",{name:"Ready to race",exact:true}).click();
+    await join.getByRole("button",{name:"Ready to race",exact:true}).click();
+    await host.getByRole("button",{name:"Start shared race",exact:true}).click();
+    await expect(host.getByTestId("room-clock")).not.toHaveText("00:00:00");
+    await host.getByRole("button",{name:"Pause shared race",exact:true}).click();
+    const clock = await host.getByTestId("room-clock").innerText();
+    await expect(join.getByTestId("room-clock")).toHaveText(clock);
+    await join.getByRole("button",{name:/Box (this|next) lap/}).click();
+    await expect(join.getByTestId("room-pit-status")).toContainText("queued");
+    await join.getByRole("button",{name:"Cancel shared pit call",exact:true}).click();
+    await expect(join.getByTestId("room-pit-status")).toContainText("Stay out");
+    await guest.reload();
+    await expect(join.getByRole("status",{exact:true})).toHaveText("Connected");
+    await expect(join.getByRole("heading",{name:"Your strategy · Driver 2",exact:true})).toBeVisible();
+    await expect(join.getByTestId("room-clock")).toHaveText(clock);
+    await join.getByRole("button",{name:"Release Driver 2",exact:true}).click();
+    await host.getByLabel("Handover recipient").selectOption({label:"Bravo"});
+    await host.getByRole("button",{name:"Hand over Driver 1",exact:true}).click();
+    await expect(host.getByRole("heading",{name:"Your strategy · Spectating",exact:true})).toBeVisible();
+    await expect(join.getByRole("heading",{name:"Your strategy · Driver 1",exact:true})).toBeVisible();
+    await expect(host.getByRole("button",{name:"Box this lap",exact:true})).toBeDisabled();
+    await host.getByRole("button",{name:"Transfer host role",exact:true}).click();
+    await expect(join.getByRole("button",{name:"Resume shared race",exact:true})).toBeVisible();
+    await join.getByLabel("Shared race speed").selectOption("25");
+    await join.getByRole("button",{name:"Resume shared race",exact:true}).click();
+    await expect(join.getByRole("heading",{name:"Final results",exact:true})).toBeVisible({timeout:15000});
+    await expect(host.getByRole("heading",{name:"Final results",exact:true})).toBeVisible();
+    await expect(join.getByLabel("Shared running order")).toHaveText(await host.getByLabel("Shared running order").innerText(), {useInnerText:true});
+    await expect(join.getByTestId("room-clock")).toHaveText(await host.getByTestId("room-clock").innerText());
+    await join.getByRole("button",{name:"Reset shared race",exact:true}).click();
+    await expect(host.getByTestId("room-clock")).toHaveText("00:00:00");
+  } finally { await other.close(); }
+});
+
+test("the real room hub rejects forged control, duplicate seat claims and invalid guest tokens", async ({request, baseURL}) => {
+  const track=newTrack(), setup=sandboxDefaults(track);
+  const created=await request.post("/api/rooms",{data:{name:"Wire host",track,setup}});
+  expect(created.ok()).toBe(true);
+  const host=await created.json();
+  const guest=await (await request.post(`/api/rooms/${host.code}/join`,{data:{name:"Wire guest"}})).json();
+  const h=new HubConnectionBuilder().withUrl(`${baseURL}/api/rooms/live`).configureLogging(LogLevel.None).build();
+  const g=new HubConnectionBuilder().withUrl(`${baseURL}/api/rooms/live`).configureLogging(LogLevel.None).build();
+  try {
+    await Promise.all([h.start(),g.start()]);
+    await expect(g.invoke("Enter",host.code,"invalid")).rejects.toThrow(/session/);
+    const initial=await h.invoke("Enter",host.code,host.token);
+    await g.invoke("Enter",host.code,guest.token);
+    expect(JSON.stringify(initial)).not.toContain(host.token);
+    await expect(g.invoke("Decide",{action:"start"})).rejects.toThrow(/host/);
+    const claims=await Promise.allSettled([h.invoke("Decide",{action:"claim",driverId:setup.drivers[0].id}),g.invoke("Decide",{action:"claim",driverId:setup.drivers[0].id})]);
+    expect(claims.filter(r=>r.status==="fulfilled")).toHaveLength(1);
+    await h.invoke("Decide",{action:"release",driverId:setup.drivers[0].id});
+    await h.invoke("Decide",{action:"claim",driverId:setup.drivers[0].id});
+    await expect(g.invoke("Decide",{action:"box",driverId:setup.drivers[0].id})).rejects.toThrow(/claimed driver/);
+    await expect(g.invoke("Decide",{action:"reset"})).rejects.toThrow(/host/);
+    await expect(g.invoke("Decide",{action:"advance",elapsed:99999,positions:[]})).rejects.toThrow(/Unknown/);
+    const unchanged=await h.invoke("Decide",{action:"pause"});
+    expect(unchanged.elapsed).toBe(0);
+    await h.invoke("Decide",{action:"remove",playerId:guest.playerId});
+    await expect(g.invoke("Decide",{action:"claim",driverId:setup.drivers[1].id})).rejects.toThrow(/Reconnect/);
+    await h.invoke("Decide",{action:"leave"});
+    await expect(h.invoke("Decide",{action:"box",driverId:setup.drivers[0].id})).rejects.toThrow(/Reconnect/);
+  } finally { await Promise.all([h.stop(),g.stop()]); }
+});
+
+test("room invitations fail clearly and mobile guests can join, leave and release their seat", async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.goto("/?room=000000000000");
+  const panel=page.getByRole("dialog",{name:"Multiplayer rooms",exact:true});
+  await panel.getByLabel("Guest name",{exact:true}).fill("Mobile");
+  await panel.getByRole("button",{name:"Join room",exact:true}).click();
+  await expect(panel.getByRole("alert")).toContainText("unavailable");
+  await panel.getByRole("button",{name:"Create private room",exact:true}).click();
+  await expect(panel.getByRole("status",{exact:true})).toHaveText("Connected");
+  await panel.getByRole("button",{name:"Claim Driver 1",exact:true}).click();
+  expect(await panel.evaluate(e=>e.scrollWidth<=e.clientWidth)).toBe(true);
+  await panel.getByRole("button",{name:"Leave room and release seat",exact:true}).click();
+  await expect(panel.getByRole("button",{name:"Create private room",exact:true})).toBeVisible();
+});
