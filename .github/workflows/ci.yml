@@ -30,6 +30,8 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+      - name: Validate user guide and flow registry
+        run: node scripts/check-docs.mjs
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"

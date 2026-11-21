@@ -2,6 +2,8 @@
 
 This demo uses cached Monza data. No provider sign-in is needed to inspect it.
 
+For all controls, save/reset behavior, limits and recovery paths, use the [complete user guide](USER-GUIDE.md).
+
 ## Start
 
 From the repository root, run `node scripts/doctor.mjs`. If the frontend/API are built and PostgreSQL is running, use `node scripts/preview.mjs`. Otherwise follow the README's Docker or development setup first. `--snapshot` runs without PostgreSQL, with temporary bookmarks/imports.

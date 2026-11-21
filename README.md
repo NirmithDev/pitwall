@@ -2,7 +2,9 @@
 
 An independent motorsport replay prototype built with React, TypeScript, ASP.NET Core 10, and PostgreSQL 17. Start with recorded races; later, branch into player-controlled strategy simulations.
 
-[Three-minute demo](docs/DEMO.md) · [v1.3 guide](docs/V1.3.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/FOLLOW-UP-PLAN.md)
+[Complete user guide](docs/USER-GUIDE.md) · [Three-minute demo](docs/DEMO.md) · [v1.3 release notes](docs/V1.3.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/FOLLOW-UP-PLAN.md)
+
+The [handbook](docs/USER-GUIDE.md) documents every current user flow: steps, defaults, saved data, exports, resets and recovery. For future upgrades, follow [CONTRIBUTING](CONTRIBUTING.md) and update the affected flows alongside the implementation. CI checks the registry, links, required sections, UI component coverage and product version.
 
 ## What works now
 
@@ -77,6 +79,7 @@ For a preview without PostgreSQL, run `./scripts/dev-api.ps1 -Snapshot`. The rac
 See [the testing guide](docs/TESTING.md) for current browser coverage, deterministic provider fixtures, and failure reports.
 
 ```powershell
+node scripts/check-docs.mjs
 dotnet build backend/Pitwall.Api/Pitwall.Api.csproj -c Release
 python scripts/test-api.py
 cd frontend
