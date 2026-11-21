@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
+const MultiplayerRooms = lazy(() => import("./MultiplayerRooms"));
 import {
   downloadJson,
   parseTrack,
@@ -36,6 +37,7 @@ export default function CircuitSandbox({
   active: boolean;
 }) {
   const [setup, setSetup] = useState(() => readSandbox(track));
+  const [showRoom, setShowRoom] = useState(false);
   const [session, setSession] = useState(() => ({
     states: initialGrid(setup.drivers), elapsed: 0,
   }));
@@ -127,6 +129,8 @@ export default function CircuitSandbox({
           collisions, fuel, overtaking or vehicle upgrades.
         </p>
       </div>
+      <button className="save-button" onClick={() => {setRunning(false);setShowRoom(true);}}>Host this setup with friends</button>
+      {showRoom && <Suspense fallback={<p role="status">Loading multiplayer…</p>}><MultiplayerRooms initialTrack={track} initialSetup={setup} onClose={() => setShowRoom(false)} /></Suspense>}
       <div className="sandbox-controls">
         <label className="lab-field">
           Race distance (laps)

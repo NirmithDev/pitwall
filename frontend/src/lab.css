@@ -138,6 +138,13 @@
   gap: 12px;
   margin-top: 18px;
 }
+.room-entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 20px 0; }
+.room-entry-grid h3 { font-size: 15px; }
+.room-status, .room-seat { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.room-status { justify-content: space-between; }
+.room-seat { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.room-seat > span { flex: 1 1 100%; }
+@media (max-width: 700px) { .room-entry-grid { grid-template-columns: minmax(0, 1fr); } }
 .sandbox-stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 230px;

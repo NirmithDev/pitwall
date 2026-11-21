@@ -1,11 +1,23 @@
 using System.Text.Json;
 using Npgsql;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Services.AddProblemDetails();
 builder.Services.AddResponseCompression();
+builder.Services.AddSignalR(options => { options.MaximumReceiveMessageSize = 8192; options.MaximumParallelInvocationsPerClient = 1; });
+builder.Services.AddSingleton<RaceRooms>();
+builder.Services.AddHostedService<RaceRoomClock>();
+builder.Services.AddRateLimiter(options => {
+    options.RejectionStatusCode = 429;
+    options.AddPolicy("room-guests", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "local", _ => new FixedWindowRateLimiterOptions {
+            PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true
+        }));
+});
 var connection = builder.Configuration.GetConnectionString("Pitwall");
 if (!string.IsNullOrWhiteSpace(connection)) builder.Services.AddSingleton(NpgsqlDataSource.Create(connection));
 builder.Services.AddSingleton<RaceStore>();
@@ -17,9 +29,19 @@ builder.Services.AddHostedService<CatalogRefreshService>();
 var app = builder.Build();
 app.UseExceptionHandler();
 app.UseResponseCompression();
+app.UseRateLimiter();
 await app.Services.GetRequiredService<RaceStore>().InitializeAsync();
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.MapHub<RaceRoomHub>("/api/rooms/live");
+app.MapPost("/api/rooms", (RoomCreateInput input, RaceRooms rooms) => {
+    try { return Results.Ok(rooms.Create(input)); }
+    catch (RoomError e) { return Results.BadRequest(new { message = e.Message }); }
+}).RequireRateLimiting("room-guests").WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(100000));
+app.MapPost("/api/rooms/{code}/join", (string code, RoomJoinInput input, RaceRooms rooms) => {
+    try { return Results.Ok(rooms.Join(code, input.Name)); }
+    catch (RoomError e) { return Results.BadRequest(new { message = e.Message }); }
+}).RequireRateLimiting("room-guests");
 
 app.MapGet("/health", async (RaceStore data, CancellationToken ct) =>
     await data.ReadyAsync(ct) ? Results.Ok(new { status = "healthy", storage = data.Storage }) : Results.StatusCode(503));

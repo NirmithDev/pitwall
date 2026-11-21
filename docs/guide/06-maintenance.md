@@ -17,6 +17,7 @@
 | Theme/default map/named map layouts | Browser only | Browser only | Hostname + port + scheme + browser/profile |
 | Saved circuits/sandbox setups/strategy scenarios | Browser only | Browser only | Same origin isolation |
 | Unsaved drafts, tool selections, simulation clock | Current page/tool session | Current page/tool session | Not automatically restored |
+| Multiplayer rooms/shared race clock | API process memory; lost on restart | API process memory; lost on restart | Guest credential in tab session storage, no token in invitation |
 | Exported files | Download location you choose | Download location you choose | Not automatically re-imported |
 
 **Result and storage:** `localhost:5080`, `127.0.0.1:5080`, `localhost:5173` and `localhost:8080` are different browser origins. They can expose the same database while showing different browser-only saves. Different browsers/profiles are isolated too.

@@ -47,6 +47,8 @@ v1.3 adds held-out pace-baseline evaluation: past-only training within the curre
 
 The first v1.4 increment implements finite fictional sessions (1–50 laps), deterministic finishing order/times, live selected-driver pit calls, cancellation before entry and repeat visits. See [the current sandbox guide](guide/05-race-sandbox.md). Next increments: explicit game-model tyre tradeoffs, a balanced upgrade budget, then complete session save/resume. These are planned; current setup saves do not restore runtime.
 
+The private-room increment adds a server-owned C# simulation, SignalR guest connections, exclusive driver claims/readiness, shared host controls, live calls, spectator support, reconnect and explicit driver/host handover. See [multiplayer flows](guide/07-multiplayer.md). Room storage is in memory, independent of PostgreSQL; public hosting, durable room recovery and multiple-instance coordination remain future scope.
+
 ## Branch and validation workflow
 
 Use a focused feature branch for each milestone, run timing/camera unit tests and browser tests, and review into `develop`. Promote to `master` once the integration branch is ready. Container delivery continues through the existing GitHub Actions workflow.
