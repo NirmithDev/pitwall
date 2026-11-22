@@ -50,6 +50,7 @@ const RaceAnalysis = lazy(() => import("./RaceAnalysis"));
 const PaceBacktest = lazy(() => import("./PaceBacktest"));
 const MultiplayerRooms = lazy(() => import("./MultiplayerRooms"));
 const DriverRecruitment = lazy(() => import("./DriverRecruitment"));
+const LocalChampionship = lazy(() => import("./LocalChampionship"));
 import "./lab.css";
 import { momentLink, readMoment } from "./replay-link";
 import { ensureTiming } from "./import-job";
@@ -95,7 +96,8 @@ function App() {
   const [showBacktest, setShowBacktest] = useState(false);
   const [showRooms, setShowRooms] = useState(() => new URLSearchParams(location.search).has("room"));
   const [showRecruitment, setShowRecruitment] = useState(false);
-  const activeTool = showRecruitment ? "recruitment" : showRooms ? "rooms" : showLibrary
+  const [showChampionship, setShowChampionship] = useState(false);
+  const activeTool = showChampionship ? "championship" : showRecruitment ? "recruitment" : showRooms ? "rooms" : showLibrary
     ? "library"
     : shareLink
       ? "share"
@@ -109,6 +111,7 @@ function App() {
               ? "backtest"
               : "none";
   const closeTools = () => {
+    setShowChampionship(false);
     setShowRecruitment(false);
     setShowRooms(false);
     setShowLibrary(false);
@@ -199,6 +202,7 @@ function App() {
         showBacktest ||
         showRooms ||
         showRecruitment ||
+        showChampionship ||
         document.querySelector("dialog[open]")
       )
         return;
@@ -229,6 +233,7 @@ function App() {
     showBacktest,
     showRooms,
     showRecruitment,
+    showChampionship,
   ]);
   useEffect(() => {
     if (!notice) return;
@@ -426,6 +431,7 @@ function App() {
         </section>
         <div className="lab-launcher">
           <span>REPLAY TOOLS</span>
+          <button onClick={()=>{setPlaying(false);setShowChampionship(true);}}>Local championship</button>
           <button disabled={race.track.length<6} onClick={()=>{setPlaying(false);setRaceOnReplay(true);setShowTrackEditor(true);}}>Race this circuit</button>
           <button onClick={() => {setPlaying(false);setShowRecruitment(true);}}>Driver recruitment</button>
           <button onClick={() => {setPlaying(false);setShowRooms(true);}}>Multiplayer rooms</button>
@@ -999,6 +1005,7 @@ function App() {
           )}
           {showRooms && <MultiplayerRooms onClose={() => setShowRooms(false)} />}
           {showRecruitment && <DriverRecruitment onClose={() => setShowRecruitment(false)} />}
+          {showChampionship && <LocalChampionship race={race} onClose={()=>setShowChampionship(false)} />}
           {showAnalysis && (
             <RaceAnalysis
               race={race}

@@ -53,6 +53,8 @@ Fictional recruiting now adds generated prospects/fees, a browser-local budget a
 
 Roster/venue integration now fills empty team seats on signing, keeps signed choices current in an open sandbox, applies selected profiles to new unsaved grids and supports explicit partial sync/per-slot swaps without silently resetting active runs. **Race this circuit** prepares the open replay's approximate outline as a validated independent race venue, with a generated connected pit route and the selected signed drivers. Historical results remain separate; public hosting and a protected cross-device team economy are still later work.
 
+The next local-career increment implements a three-round championship using saved/custom and cached replay venues, two frozen signed builds plus four rivals, exact classified results, points/countback, team totals and saved race checkpoints. See [championship flows](guide/09-championship.md). Next: integrate carefully bounded prize credits, then capped driver training, then consider multiplayer championships. The current cup does not change recruiting credits.
+
 ## Branch and validation workflow
 
 Use a focused feature branch for each milestone, run timing/camera unit tests and browser tests, and review into `develop`. Promote to `master` once the integration branch is ready. Container delivery continues through the existing GitHub Actions workflow.
