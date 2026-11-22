@@ -11,7 +11,7 @@ Recruitment manages fictional driver profiles. It is separate from real players 
 
 **How:** Open **Driver recruitment** from the replay toolbar, or **Custom circuit studio → Circuit race sandbox → Recruit and manage drivers**. The sandbox pauses when opening its manager. Read your credits and roster count at the top.
 
-**Result and storage:** A fresh team starts with 12,000 credits, six generated prospects, an empty six-driver-capacity roster and two unassigned race seats. The first successful initialization saves that market; reopening does not reroll it. The same team is shared across fictional circuits on this browser origin. An unsaved custom-driver draft is separate from the saved team.
+**Result and storage:** A fresh team starts with 12,000 credits, six generated prospects, an empty six-driver-capacity roster and two unassigned race seats. Claimed championship rewards can grow the balance above the starting amount, up to 1,000,000 credits. The first successful initialization saves that market; reopening does not reroll it. The same team is shared across fictional circuits on this browser origin. An unsaved custom-driver draft is separate from the saved team.
 
 **Recovery and limits:** Storage errors show a warning; unreadable existing data is not silently replaced. **Load latest team** rereads saved state without changing the custom draft or current race. Different browsers/profiles, schemes, hostnames and ports have separate teams. There is no server-synchronized budget or competitive economy verification.
 
@@ -35,7 +35,7 @@ Recruitment manages fictional driver profiles. It is separate from real players 
 
 **Result and storage:** Signing deducts the fee and saves the roster/market/budget together. A signing fills the first empty selected race seat automatically; further signings become reserves when both are occupied. The fee is `500 + round((pace² × 0.45 + consistency² × 0.25 + pitDiscipline² × 0.15) / 25) × 25`. Release refunds 40% of that driver's signing fee, rounded down, and clears its selected seats. Release does not return a driver to the market. Existing race copies retain that driver until replaced.
 
-**Recovery and limits:** Insufficient funds or a full roster disable signing. Re-signing a removed market ID is rejected. Signed names must be distinct ignoring case. Releases are immediate and have no undo; the refund is smaller than the signing cost. There are no recurring wages or race income yet.
+**Recovery and limits:** Insufficient funds or a full roster disable signing. Re-signing a removed market ID is rejected. Signed names must be distinct ignoring case. Releases are immediate and have no undo; the refund is smaller than the signing cost. Spend credits first if a release refund would exceed the 1,000,000-credit cap. There are no recurring wages; saved championship rewards provide explicit race income.
 
 <a id="team-04"></a>
 ## TEAM-04 — Build and sign a custom driver
@@ -94,7 +94,7 @@ Recruitment manages fictional driver profiles. It is separate from real players 
 
 **How:** **Export team JSON** downloads the currently displayed team, including seed/market, roster, lineup and credits. **Start fresh team** opens an explanation; **Confirm fresh team** replaces saved recruiting data with a new 12,000-credit team, or **Keep current team** cancels.
 
-**Result and storage:** A confirmed reset replaces this browser origin's recruiting record. Existing circuits, local race grid copies and multiplayer rooms remain separate. Resetting does not save or clear those copies. If you are viewing an unreadable saved record's fallback, back up the raw stored data before resetting; exporting the displayed fallback does not recover the old record.
+**Result and storage:** A confirmed reset replaces this browser origin's recruiting record, including reward receipts, and creates a new team identity. Existing circuits, local race grid copies, championship definitions and multiplayer rooms remain separate. The fresh identity cannot claim rewards from an older linked cup. Resetting does not save or clear those copies. If you are viewing an unreadable saved record's fallback, back up the raw stored data before resetting; exporting the displayed fallback does not recover the old record.
 
 **Recovery and limits:** There is no team importer or reset undo. A failed reset write retains the old record and reports an error. Other recruiting tabs must load the latest team after a reset. Credits are fictional, so a fresh-team reset is allowed; this is not a protected online economy.
 
@@ -108,3 +108,14 @@ Recruitment manages fictional driver profiles. It is separate from real players 
 **Result and storage:** New unsaved grids automatically use available selected team seats; a stored circuit/race setup retains its own grid until explicitly synced. Signing itself never resets a running race. A grid selection copies the profile's name, colour, derived pace and service duration. Choosing a build already in another slot swaps the builds while keeping each slot's planned pit lap. Sync/selection records ordinary sandbox undo history and restarts its local run; geometry, base pace and distance stay intact. Selecting team seat two can grow a one-driver grid to two.
 
 **Recovery and limits:** Save circuit/race setup separately to persist a copied grid. Unreadable roster storage disables selection/sync while leaving the manual grid usable. Releasing a profile removes it from available choices but does not erase an already copied grid driver. Existing multiplayer rooms keep their frozen driver definitions. Shared browser storage does not synchronize across devices or different origins/profiles.
+
+<a id="team-10"></a>
+## TEAM-10 — Inspect championship earnings and spend prize credits
+
+**What:** See claimed race income alongside the recruiting budget.
+
+**How:** Claim a completed-round reward in **Local championship**, then open **Driver recruitment → Championship earnings**. Read total claimed credits/count and the latest ten receipts. Use the updated balance for ordinary market signings, custom builds or scouting.
+
+**Result and storage:** Every receipt remains in the versioned team JSON (up to 1,000); showing only ten does not delete older duplicate-proof IDs. Exports include the receipts. Older team saves without a receipt field read as an empty history while retaining roster, lineup, market and credits; the next successful save stores the normalized field. Rewards update an open sandbox/recruiting view through normal team notifications; stale recruiting writes still fail revision checks rather than erase income.
+
+**Recovery and limits:** Receipt totals are gross claimed income, not a complete spending ledger or current balance. Purchases/releases still change the balance normally. Training and a full transaction history remain later work. Team reset clears the recruiting record and changes its identity; it does not grant ownership of previously entered championships.

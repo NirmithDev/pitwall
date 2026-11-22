@@ -11,6 +11,7 @@ export type Championship = {
   version:1;id:string;revision:number;name:string;teamName:string;ownDriverIds:string[];
   entrants:SandboxDriver[];venues:Venue[];results:RoundResult[];
   session:{round:number;elapsed:number;states:PreviewState[]}|null;
+  rewardTeamId?:string|null;
 };
 export function createChampionship(name:string,team:Team,choices:{id:string;label:string;track:CustomTrack}[],laps:number,baseLapSeconds:number):Championship {
   if(!name.trim()||name.trim().length>48)throw new Error("Use a championship name of 1–48 characters.");
@@ -26,7 +27,7 @@ export function createChampionship(name:string,team:Team,choices:{id:string;labe
     if(errors.length)throw new Error(`${v.label}: ${errors.join(" ")}`);
     return {...v,track,setup};
   });
-  return {version:1,id:crypto.randomUUID(),revision:0,name:name.trim(),teamName:team.name,ownDriverIds:entrants.slice(0,2).map(d=>d.id),entrants,venues,results:[],session:null};
+  return {version:1,id:crypto.randomUUID(),revision:0,name:name.trim(),teamName:team.name,ownDriverIds:entrants.slice(0,2).map(d=>d.id),entrants,venues,results:[],session:null,rewardTeamId:team.id};
 }
 export function beginRound(c:Championship):Championship {
   if(c.session)throw new Error("Finish the active round before starting another.");
@@ -81,6 +82,7 @@ function parseSession(raw:NonNullable<Championship["session"]>,c:Championship):N
 export function parseChampionship(raw:unknown):Championship {
   if(!raw||typeof raw!=="object")throw new Error("Invalid saved championship.");
   const r=raw as Championship;
+  if(r.rewardTeamId!==undefined&&r.rewardTeamId!==null&&(typeof r.rewardTeamId!=="string"||!r.rewardTeamId||r.rewardTeamId.length>64))throw new Error("Invalid championship reward owner.");
   if(r.version!==1||typeof r.id!=="string"||!r.id||r.id.length>80||!Number.isSafeInteger(r.revision)||r.revision<0||
     typeof r.name!=="string"||!r.name.trim()||r.name.length>48||typeof r.teamName!=="string"||r.teamName.length>32||
     !Array.isArray(r.venues)||r.venues.length!==3||!Array.isArray(r.entrants)||r.entrants.length!==6||
@@ -101,6 +103,11 @@ export function parseChampionship(raw:unknown):Championship {
   });
   const c={...r,venues,results,entrants:venues[0].setup.drivers};
   return {...c,session:r.session===null?null:parseSession(r.session,c)};
+}
+export function linkLegacyRewardTeam(c:Championship,team:Team):Championship {
+  if(c.rewardTeamId&&c.rewardTeamId!==team.id)throw new Error("This cup belongs to another recruiting team.");
+  if(!c.ownDriverIds.every(id=>team.roster.some(d=>`recruit:${d.id}`===id)))throw new Error("The original two signed drivers must still be on this team's roster to link an older cup.");
+  return {...c,rewardTeamId:team.id};
 }
 export function readChampionship():{championship:Championship|null;raw:string|null;error:string} {
   try {

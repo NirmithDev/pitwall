@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "productVersion": "1.4.0",
-  "lastReviewed": "2026-11-21",
+  "lastReviewed": "2026-11-22",
   "chapters": [
     {
       "path": "docs/guide/01-start-library.md",
@@ -1157,6 +1157,66 @@
         "frontend/src/championship.test.ts",
         "frontend/e2e/championship.spec.ts",
         "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "CUP-09",
+      "title": "Claim saved round rewards for recruiting",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-09",
+      "sources": [
+        "frontend/src/championship-rewards.ts",
+        "frontend/src/championship-rewards.test.ts",
+        "frontend/src/recruitment.ts",
+        "frontend/src/championship.ts",
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/e2e/rewards.spec.ts"
+      ]
+    },
+    {
+      "id": "CUP-10",
+      "title": "Retry safely and coordinate reward claims across tabs",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-10",
+      "sources": [
+        "frontend/src/championship-rewards.ts",
+        "frontend/src/championship-rewards.test.ts",
+        "frontend/src/recruitment.ts",
+        "frontend/src/championship.ts",
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/e2e/rewards.spec.ts"
+      ]
+    },
+    {
+      "id": "CUP-11",
+      "title": "Link an older cup and understand team resets",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-11",
+      "sources": [
+        "frontend/src/championship-rewards.ts",
+        "frontend/src/championship-rewards.test.ts",
+        "frontend/src/recruitment.ts",
+        "frontend/src/championship.ts",
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/e2e/rewards.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-10",
+      "title": "Inspect championship earnings and spend prize credits",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-10",
+      "sources": [
+        "frontend/src/championship-rewards.ts",
+        "frontend/src/championship-rewards.test.ts",
+        "frontend/src/recruitment.ts",
+        "frontend/src/championship.ts",
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/e2e/rewards.spec.ts"
       ]
     }
   ]

@@ -4,14 +4,17 @@ import NumberField from "./NumberField";
 import {request} from "./api";
 import {newTrack,readTracks,downloadJson,type CustomTrack} from "./custom-track";
 import {circuitFromReplay} from "./replay-circuit";
-import {readTeam} from "./recruitment";
+import {readTeam,teamKey,teamUpdatedEvent} from "./recruitment";
+import {claimRoundReward,readRewardTeam,roundReward} from "./championship-rewards";
 import {formatClock,type Race} from "./race";
 import type {Catalog} from "./RaceLibrary";
 import {nextPitEntry,pendingPit,previewPoint,raceOrder,sandboxGeometry} from "./sandbox";
-import {advanceChampionship,beginRound,championshipCall,championshipKey,championshipPoints,createChampionship,discardUnreadableChampionship,readChampionship,saveChampionship,standings,type Championship} from "./championship";
+import {advanceChampionship,beginRound,championshipCall,championshipKey,championshipPoints,createChampionship,discardUnreadableChampionship,linkLegacyRewardTeam,readChampionship,saveChampionship,standings,type Championship} from "./championship";
 
 export default function LocalChampionship({race,onClose}:{race:Race;onClose:()=>void}) {
   const [loaded]=useState(readChampionship);
+  const [rewardAccount,setRewardAccount]=useState(readRewardTeam);
+  const [rewardBusy,setRewardBusy]=useState(false),[rewardError,setRewardError]=useState(""),[rewardMessage,setRewardMessage]=useState("");
   const [recoveryRaw,setRecoveryRaw]=useState(loaded.error?loaded.raw:null);
   const [champ,setChamp]=useState(loaded.championship);
   const current=useRef(champ);
@@ -34,6 +37,12 @@ export default function LocalChampionship({race,onClose}:{race:Race;onClose:()=>
       ...(catalog?.sessions.filter(s=>s.cached&&s.id!==race.id).map(s=>({id:`replay:${s.id}`,label:`${s.circuit} ${s.year}`,track:null as CustomTrack|null,raceId:s.id}))??[])];
     return list;
   },[starter,customs,race,catalog]);
+  useEffect(()=>{
+    const refresh=()=>setRewardAccount(readRewardTeam());
+    const storage=(event:StorageEvent)=>{if(event.key===teamKey||event.key===null)refresh();};
+    window.addEventListener(teamUpdatedEvent,refresh);window.addEventListener("storage",storage);window.addEventListener("focus",refresh);
+    return ()=>{window.removeEventListener(teamUpdatedEvent,refresh);window.removeEventListener("storage",storage);window.removeEventListener("focus",refresh);};
+  },[]);
   useEffect(()=>{
     const controller=new AbortController();
     void request<Catalog>("/api/sessions",{signal:controller.signal}).then(setCatalog).catch(e=>{if(!controller.signal.aborted)setCatalogError(e.message);});
@@ -108,15 +117,39 @@ export default function LocalChampionship({race,onClose}:{race:Race;onClose:()=>
     if(saving.current)await new Promise<void>(resolve=>saveWaiters.current.push(resolve));
     if(!current.current||await persist())onClose();
   }
+  async function claim(round:number) {
+    stop();setRewardBusy(true);setRewardError("");setRewardMessage("");
+    try {
+      if(saving.current)await new Promise<void>(resolve=>saveWaiters.current.push(resolve));
+      if(unsaved.current&&!await persist())throw new Error("Save the championship result successfully before claiming its reward.");
+      const result=await claimRoundReward(current.current!.id,round);
+      setRewardAccount({team:result.team,error:""});
+      setRewardMessage(result.alreadyClaimed?`Round ${round+1} was already claimed; no additional credits were added.`:`Round ${round+1} reward claimed: +${result.receipt.amount.toLocaleString("en-US")} credits.`);
+    }catch(e){setRewardError((e as Error).message);}finally{setRewardBusy(false);}
+  }
+  async function linkOlderCup() {
+    stop();setRewardBusy(true);setRewardError("");
+    try {
+      if(saving.current)await new Promise<void>(resolve=>saveWaiters.current.push(resolve));
+      const account=readRewardTeam();if(!account.team)throw new Error(account.error);
+      replace(linkLegacyRewardTeam(current.current!,account.team));
+      if(!await persist())throw new Error("The cup could not be linked. Retry after saving is available.");
+      setRewardMessage("Older cup linked to its original recruiting team. Saved completed rounds can now be claimed.");
+    }catch(e){setRewardError((e as Error).message);}finally{setRewardBusy(false);}
+  }
   const control=champ?.session?.states.find(s=>s.id===controlled);
   const driver=champ?.entrants.find(d=>d.id===controlled);
   const target=control&&venue?pendingPit(control,driver!,venue.setup):null;
   const nextEntry=control&&venue?nextPitEntry(control,venue.setup):null;
   const rows=champ?standings(champ):[];
-  const locked=busy||conflict||!!writeError;
+  const locked=busy||conflict||!!writeError||rewardBusy;
+  const claims=rewardAccount.team?.rewardClaims??[];
+  const ownsRewards=!!champ?.rewardTeamId&&champ.rewardTeamId===rewardAccount.team?.id;
+  const lockSupport=typeof navigator!=="undefined"&&!!navigator.locks;
+  const unclaimed=champ?.results.reduce((total,r)=>total+(claims.some(c=>c.championshipId===champ.id&&c.round===r.round)?0:roundReward(champ,r.round).amount),0)??0;
   const last=champ?.results.at(-1);
   return <Dialog title="Local championship" wide onClose={()=>void close()}>
-    <div className="strategy-banner"><span>THREE-ROUND FICTIONAL CUP</span><p>Race your two signed drivers against four rivals. Earn championship points across three venues. Results and race checkpoints save in this browser; recruiting credits and multiplayer rooms stay separate.</p></div>
+    <div className="strategy-banner"><span>THREE-ROUND FICTIONAL CUP</span><p>Race your two signed drivers against four rivals. Earn championship points across three venues, then claim saved round rewards for your recruiting budget. Results and checkpoints save in this browser; multiplayer rooms remain separate.</p></div>
     {error&&<p role="alert">{error}</p>}{writeError&&<p role="alert">Save failed: {writeError}</p>}
     <div className="lab-actions"><button className="lab-button" disabled={busy} onClick={loadSaved}>Load saved championship</button>
       {champ&&<button className="lab-button" onClick={()=>downloadJson("pitwall-championship.json",champ)}>Export championship JSON</button>}
@@ -124,7 +157,7 @@ export default function LocalChampionship({race,onClose}:{race:Race;onClose:()=>
       {writeError&&<button className="lab-button" onClick={onClose}>Close without saving</button>}
     </div>
     {confirmDiscard&&<div className="studio-validation"><p>This deletes only the unreadable championship record. Download its backup first.</p><button className="lab-button" onClick={async()=>{try{await discardUnreadableChampionship(recoveryRaw!);setConfirmDiscard(false);loadSaved();}catch(e){setError((e as Error).message);}}}>Confirm discard championship</button></div>}
-    {creating?<section aria-label="Championship setup"><h3>Enter your selected signed lineup</h3><p className="lab-note">Select both race seats in Driver recruitment first. Entry is free; this first cup has points but no prize credits or training. Cached replay venues and saved custom circuits are available; import other replays through Browse races first.</p>
+    {creating?<section aria-label="Championship setup"><h3>Enter your selected signed lineup</h3><p className="lab-note">Select both race seats in Driver recruitment first. Entry is free. Saved completed rounds offer 200 credits plus 20 per team point, claimed once by the entering recruiting team. Training is a later step. Cached replay venues and saved custom circuits are available; import other replays through Browse races first.</p>
       <div className="sandbox-controls"><label className="lab-field">Championship name<input aria-label="Championship name" maxLength={48} value={name} onChange={e=>setName(e.target.value)}/></label>
         <label className="lab-field">Laps per round<NumberField label="Championship laps" min={1} max={50} value={laps} onChange={setLaps}/></label>
         <label className="lab-field">Base lap seconds<NumberField label="Championship base lap seconds" min={30} max={300} value={base} onChange={setBase}/></label>
@@ -132,7 +165,7 @@ export default function LocalChampionship({race,onClose}:{race:Race;onClose:()=>
       </div>
       {catalogError&&<p className="lab-note">Cached venue list unavailable: {catalogError}. Current/saved circuits can still be selected.</p>}
       <div className="lab-actions"><button className="save-button" disabled={busy||selected.some(id=>!id)||new Set(selected).size!==3||!name.trim()} onClick={()=>void create()}>{champ?"Replace saved championship":"Create three-race championship"}</button>{champ&&<button className="lab-button" onClick={()=>setCreating(false)}>Keep current championship</button>}</div>
-      {champ&&<p className="lab-note">Creating this replaces the saved championship, including its results and any checkpoint. Export the old championship first if needed.</p>}
+      {champ&&<p className="lab-note">Creating this replaces the saved championship, including its results and any checkpoint. {unclaimed.toLocaleString("en-US")} unclaimed reward credits from completed rounds will no longer be available. Claim them before replacing the cup, or export an inspection record first.</p>}
     </section>:champ&&<>
       <div className="room-status"><h3>{champ.name}</h3><strong>{champ.teamName}</strong><span data-testid="cup-progress">{champ.results.length}/3 rounds complete</span><span>{dirty?"Unsaved progress": "Saved"}</span></div>
       <ol>{champ.venues.map((v,i)=><li key={v.id}>{v.label} · {i<champ.results.length?"Completed":i===champ.results.length?"Next/current":"Upcoming"}</li>)}</ol>
@@ -154,6 +187,22 @@ export default function LocalChampionship({race,onClose}:{race:Race;onClose:()=>
       </section>}
       {!champ.session&&last&&<section aria-label="Last championship result"><h3>{champ.results.length===3?"Championship complete":"Round complete"} · {champ.venues[last.round].label}</h3><ol>{last.classification.map((r,i)=><li key={r.driverId}>{champ.entrants.find(d=>d.id===r.driverId)!.name} · {r.finishTime.toFixed(3)}s · +{championshipPoints[i]} points</li>)}</ol></section>}
       <section aria-label="Championship standings"><h3>Driver standings</h3><div className="sandbox-order">{rows.map((r,i)=><div className="sandbox-order-row" key={r.driver.id}><b>{i+1}</b><span>{r.driver.name}{champ.ownDriverIds.includes(r.driver.id)?" · your team":""}<small>{r.finishes[0]} wins</small></span><strong>{r.points} pts</strong></div>)}</div><p>Team points: <strong data-testid="cup-team-points">{rows.filter(r=>champ.ownDriverIds.includes(r.driver.id)).reduce((sum,r)=>sum+r.points,0)}</strong></p></section>
+      <section className="sandbox-drivers" aria-label="Championship rewards"><div className="room-status"><h3>Round rewards</h3><strong data-testid="cup-recruiting-credits">{rewardAccount.team?`${rewardAccount.team.credits.toLocaleString("en-US")} recruiting credits`:"Recruiting account unavailable"}</strong></div>
+        <p className="lab-note">Each saved round pays 200 credits plus 20 per team point (560–1,060 credits). Claims pause the race, use saved results and add the credits/receipt in one write. Claim before replacing the cup. Rewards are local game credits, not a server-verified economy.</p>
+        {rewardAccount.error&&<p className="lab-note">{rewardAccount.error}</p>}
+        {!champ.rewardTeamId&&<><p className="lab-note">This older cup has no recruiting-team link. Link it only if both original signed drivers remain on your current roster.</p><button className="lab-button" disabled={locked||!rewardAccount.team} onClick={()=>void linkOlderCup()}>Link older cup to original team</button></>}
+        {champ.rewardTeamId&&!ownsRewards&&<p className="lab-note">This cup belongs to another recruiting team. A fresh team cannot claim its rewards.</p>}
+        {!lockSupport&&<p className="lab-note">This browser cannot coordinate reward claims across tabs. Web Locks support is required.</p>}
+        {!champ.results.length&&<p>Finish and save a round to unlock its reward.</p>}
+        {champ.results.map(result=>{
+          const payout=roundReward(champ,result.round),receipt=claims.find(c=>c.championshipId===champ.id&&c.round===result.round);
+          return <div className="room-seat" key={result.round}><span>Round {result.round+1} · {champ.venues[result.round].label} · {payout.teamPoints} team points · {payout.amount.toLocaleString("en-US")} credits</span>
+            {receipt?<strong>Round {result.round+1} claimed · +{receipt.amount.toLocaleString("en-US")} credits</strong>:<button className="save-button" disabled={locked||!ownsRewards||!lockSupport} onClick={()=>void claim(result.round)}>Claim round {result.round+1} reward</button>}
+          </div>;
+        })}
+        {rewardError&&<p role="alert">Reward not claimed: {rewardError}</p>}
+        <p aria-live="polite" data-testid="reward-status">{rewardBusy?"Saving reward…":rewardMessage}</p>
+      </section>
       <p className="lab-note">Scoring: 25/18/15/12/10/8. Ties use wins, then seconds, thirds and later places, then original grid order. Signed builds and rivals are frozen for this cup; later recruiting changes apply to the next championship.</p>
     </>}
     <p role="status">{busy?"Saving/loading…":message}</p><p className="lab-note">Checkpoints save about every two seconds, on pauses/round finishes and on normal panel close. A hard refresh/crash can lose the last unsaved seconds. Saved races reopen paused. Storage is browser-origin local, and only one active editing tab is supported. Export is an inspection record; no championship importer is implemented.</p>
