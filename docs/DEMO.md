@@ -8,7 +8,7 @@ For all controls, save/reset behavior, limits and recovery paths, use the [compl
 
 From the repository root, run `node scripts/doctor.mjs`. If the frontend/API are built and PostgreSQL is running, use `node scripts/preview.mjs`. Otherwise follow the README's Docker or development setup first. `--snapshot` runs without PostgreSQL, with temporary bookmarks/imports.
 
-Open [Monza at 30 minutes](http://127.0.0.1:5080/?race=monza-2024&t=1800). The header reports v1.3 and the storage indicator shows the current mode.
+Open [Monza at 30 minutes](http://127.0.0.1:5080/?race=monza-2024&t=1800). The header reports v1.4.0 and the storage indicator shows the current mode.
 
 ## Replay and analysis
 

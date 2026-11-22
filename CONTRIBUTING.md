@@ -16,7 +16,7 @@ The [user guide](docs/USER-GUIDE.md) is the current behavior contract. Release n
 - For a new flow, choose a new stable ID and explicit anchor, write its complete section and add its guide/source entry to `docs/flows.json`. Do not renumber existing IDs for cosmetic reorganization.
 - Register new UI view components as flow sources. Classify truly reusable helpers under `sharedComponents` only when they do not represent their own user flow.
 - For a removed flow, remove/update its index entry and explain the replacement in release notes. Do not leave a current guide pointing at a retired control.
-- When the product version changes, review the handbook and update `productVersion` / `lastReviewed` in the registry. Review dates reflect actual review, not automatic timestamps.
+- When the product version changes, update the frontend package/root lockfile versions and API project version together, review the handbook, and update `productVersion` / `lastReviewed` in the registry. The header and API status derive their versions from those build metadata fields. Review dates reflect actual review, not automatic timestamps.
 - Run `node scripts/update-guide-index.mjs` to regenerate the index/version header, then `node scripts/check-docs.mjs`.
 - Update the short demo, README, test guide and release notes only where the change affects them. Do not rewrite historical release behavior as if it always existed.
 

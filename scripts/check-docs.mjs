@@ -21,6 +21,10 @@ function anchors(markdown){
   return result;
 }
 const registry=JSON.parse(await text("docs/flows.json")),pkg=JSON.parse(await text("frontend/package.json"));
+const lock=JSON.parse(await text("frontend/package-lock.json"));
+const apiVersion=(await text("backend/Pitwall.Api/Pitwall.Api.csproj")).match(/<Version>([^<]+)<\/Version>/)?.[1];
+if(lock.version!==pkg.version||lock.packages?.[""]?.version!==pkg.version)errors.push("Frontend package and lockfile versions differ.");
+if(apiVersion!==pkg.version)errors.push(`API version ${apiVersion??"missing"} does not match frontend ${pkg.version}.`);
 if(registry.schemaVersion!==1)errors.push("Unsupported flow registry schemaVersion.");
 if(registry.productVersion!==pkg.version)errors.push(`Guide version ${registry.productVersion} does not match frontend ${pkg.version}. Review the guide and update registry metadata.`);
 if(!/^\d{4}-\d{2}-\d{2}$/.test(registry.lastReviewed)||!Number.isFinite(Date.parse(registry.lastReviewed+"T00:00:00Z")))errors.push("Use an actual ISO guide review date.");

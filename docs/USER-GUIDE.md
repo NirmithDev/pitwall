@@ -1,6 +1,6 @@
 # Pitwall user guide
 
-**Product version:** 1.3.0
+**Product version:** 1.4.0
 
 **Last reviewed:** 2026-11-21
 

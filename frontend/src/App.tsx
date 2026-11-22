@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import {version as appVersion} from "../package.json";
 import {
   Activity,
   ArrowLeft,
@@ -323,7 +324,7 @@ function App() {
           pitwall<span>╱</span>
         </a>
         <div className="product-label">
-          RACE REPLAY LAB <span className="beta">V1.3</span>
+          RACE REPLAY LAB <span className="beta">V{appVersion}</span>
         </div>
         <div className="topbar-right">
           <ThemeToggle />
