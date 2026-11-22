@@ -2,10 +2,18 @@ import {newSandboxDriver, type SandboxDriver, type SandboxSetup} from "./sandbox
 
 export const teamKey = "pitwall.recruitment.v1";
 export const teamUpdatedEvent = "pitwall-team-updated";
-function announceTeam() {
+export function announceTeam() {
   if (typeof window !== "undefined") window.dispatchEvent(new Event(teamUpdatedEvent));
 }
 export const startingCredits = 12000;
+export const maximumCredits = 1000000;
+export const maximumRewardClaims = 1000;
+export const rewardBaseCredits = 200;
+export const rewardCreditsPerPoint = 20;
+export type RewardReceipt = {
+  version:1;championshipId:string;championshipName:string;venueLabel:string;
+  round:number;teamPoints:number;amount:number;claimedAt:string;
+};
 export const customPoints = 210;
 export const refreshFee = 250;
 export type DriverStats = { pace: number; consistency: number; pitDiscipline: number };
@@ -16,6 +24,7 @@ export type Team = {
   version: 1; id: string; revision: number; name: string; credits: number;
   seed: number; generation: number; roster: RecruitDriver[]; market: RecruitDriver[];
   lineup: [string | null, string | null];
+  rewardClaims: RewardReceipt[];
 };
 const firstNames = ["Nova", "Arden", "Luca", "Mika", "Alex", "Sora", "Remy", "Kai", "Zara", "Eden", "Rio", "Avery"];
 const lastNames = ["Vega", "Marin", "Vale", "Sato", "Reed", "Silva", "Costa", "Quinn", "Mercer", "Blake", "Moreau", "Park"];
@@ -38,7 +47,7 @@ export function generateMarket(seed: number, generation: number): RecruitDriver[
 }
 export function newTeam(seed = crypto.getRandomValues(new Uint32Array(1))[0] || 1): Team {
   return {version: 1, id: crypto.randomUUID(), revision: 0, name: "Midnight Racing", credits: startingCredits,
-    seed, generation: 0, roster: [], market: generateMarket(seed, 0), lineup: [null, null]};
+    seed, generation: 0, roster: [], market: generateMarket(seed, 0), lineup: [null, null], rewardClaims: []};
 }
 export const overall = (s: DriverStats) => Math.round((s.pace + s.consistency + s.pitDiscipline) / 3);
 export const pointsUsed = (s: DriverStats) => s.pace + s.consistency + s.pitDiscipline;
@@ -62,7 +71,7 @@ export function parseTeam(raw: unknown): Team {
   const t = raw as Team;
   if (t.version !== 1 || typeof t.id !== "string" || !t.id || t.id.length > 64 || !Number.isSafeInteger(t.revision) || t.revision < 0 ||
     typeof t.name !== "string" || !t.name.trim() || t.name.trim().length > 32 ||
-    !Number.isInteger(t.credits) || t.credits < 0 || t.credits > startingCredits ||
+    !Number.isSafeInteger(t.credits) || t.credits < 0 || t.credits > maximumCredits ||
     !Number.isInteger(t.seed) || t.seed < 1 || t.seed > 4294967295 || !Number.isInteger(t.generation) || t.generation < 0 || t.generation > 1000000 ||
     !Array.isArray(t.roster) || t.roster.length > 6 || !Array.isArray(t.market) || t.market.length > 6 || !Array.isArray(t.lineup) || t.lineup.length !== 2)
     throw new Error("Saved team has invalid budget, roster, market or version.");
@@ -71,7 +80,20 @@ export function parseTeam(raw: unknown): Team {
   if (new Set(ids).size !== ids.length || new Set(roster.map(d => d.name.toLowerCase())).size !== roster.length || market.some(d => d.origin !== "market") ||
     t.lineup.some(id => id !== null && !roster.some(d => d.id === id)) || (t.lineup[0] !== null && t.lineup[0] === t.lineup[1]))
     throw new Error("Saved team contains duplicate drivers or an invalid lineup.");
-  return {...t, name: t.name.trim(), roster, market, lineup: [...t.lineup]};
+  const claims = t.rewardClaims === undefined ? [] : t.rewardClaims;
+  if(!Array.isArray(claims)||claims.length>maximumRewardClaims)throw new Error("Invalid reward receipt history.");
+  const claimIds=new Set<string>();
+  for(const receipt of claims){
+    if(!receipt||receipt.version!==1||typeof receipt.championshipId!=="string"||!receipt.championshipId||receipt.championshipId.length>80||
+      typeof receipt.championshipName!=="string"||receipt.championshipName.length>48||typeof receipt.venueLabel!=="string"||receipt.venueLabel.length>80||
+      !Number.isInteger(receipt.round)||receipt.round<0||receipt.round>2||!Number.isInteger(receipt.teamPoints)||receipt.teamPoints<18||receipt.teamPoints>43||
+      receipt.amount!==rewardBaseCredits+rewardCreditsPerPoint*receipt.teamPoints||typeof receipt.claimedAt!=="string"||receipt.claimedAt.length>40||!Number.isFinite(Date.parse(receipt.claimedAt)))
+      throw new Error("Invalid reward receipt.");
+    const id=`${receipt.championshipId}:${receipt.round}`;
+    if(claimIds.has(id))throw new Error("Duplicate reward receipt.");
+    claimIds.add(id);
+  }
+  return {...t, name: t.name.trim(), roster, market, lineup: [...t.lineup], rewardClaims: claims.map(r=>({...r}))};
 }
 function hire(t: Team, driver: RecruitDriver): Team {
   if (t.roster.length >= 6) throw new Error("Your roster is full. Release a driver before signing another.");
@@ -95,6 +117,7 @@ export function createDriver(team: Team, draft: RecruitDriver): Team {
 export function releaseDriver(team: Team, id: string): Team {
   const driver = team.roster.find(d => d.id === id);
   if (!driver) throw new Error("This driver is not on your roster.");
+  if(team.credits+releaseRefund(driver)>maximumCredits)throw new Error("Spend some credits before releasing this driver; the balance cap is 1,000,000.");
   return {...team, credits: team.credits + releaseRefund(driver), roster: team.roster.filter(d => d.id !== id),
     lineup: team.lineup.map(d => d === id ? null : d) as Team["lineup"]};
 }

@@ -76,7 +76,7 @@ export default function DriverRecruitment({onClose, setup, onApply}: {
       <button className="lab-button" disabled={busy} onClick={() => downloadJson("pitwall-team.json",team)}>Export team JSON</button>
       <button className="lab-button" disabled={busy} onClick={() => setConfirmReset(true)}>Start fresh team</button>
     </div>
-    {confirmReset && <section className="studio-validation" aria-label="Confirm team reset"><p>This replaces the saved roster, market, lineup and credits with a fresh team. Existing races and saved circuits keep their copied drivers. Export your team first if you want a record.</p><div className="lab-actions"><button className="save-button" disabled={busy} onClick={() => void startFresh()}>Confirm fresh team</button><button className="lab-button" onClick={() => setConfirmReset(false)}>Keep current team</button></div></section>}
+    {confirmReset && <section className="studio-validation" aria-label="Confirm team reset"><p>This replaces the saved roster, market, lineup, credits and reward receipts with a new team identity. Existing races keep their copied drivers, but the fresh team cannot reclaim the old team's cup rewards. Export your team first if you want a record.</p><div className="lab-actions"><button className="save-button" disabled={busy} onClick={() => void startFresh()}>Confirm fresh team</button><button className="lab-button" onClick={() => setConfirmReset(false)}>Keep current team</button></div></section>}
     <section aria-label="Team lineup" className="sandbox-drivers"><h3>Race lineup</h3>
       <div className="lab-actions">{([0,1] as const).map(i => <label key={i} className="lab-field">Race seat {i+1}
         <select aria-label={`Race seat ${i+1}`} disabled={busy} value={team.lineup[i] ?? ""} onChange={e => void transact(t => assignSeat(t,i,e.target.value || null), "Lineup saved.")}>
@@ -119,6 +119,11 @@ export default function DriverRecruitment({onClose, setup, onApply}: {
       }}>Create and sign custom driver</button>
     </section>
     <p role="status">{message}</p>
+    <section className="sandbox-drivers" aria-label="Championship earnings"><h3>Championship earnings</h3><p>{team.rewardClaims.length} saved claims · {team.rewardClaims.reduce((sum,r)=>sum+r.amount,0).toLocaleString("en-US")} total credits earned</p>
+      {!team.rewardClaims.length&&<p className="lab-note">Claim a saved completed-round reward in Local championship to add recruiting credits.</p>}
+      <ul>{team.rewardClaims.slice(-10).reverse().map(r=><li key={`${r.championshipId}:${r.round}`}>{r.championshipName} · round {r.round+1} · {r.venueLabel} · +{r.amount.toLocaleString("en-US")} credits</li>)}</ul>
+      <p className="lab-note">The latest ten receipts are shown; all claim IDs remain saved with the balance (up to 1,000 claims). Balance cap: 1,000,000 credits. Resetting a team clears its receipts and changes its identity; it does not transfer ownership of old championships.</p>
+    </section>
     <p className="lab-note">Model: pace and consistency form a 60/40 weighted pace rating; offset = (70 − rating) × 0.12 seconds/lap. Pit discipline gives service = 5 − rating × 0.04 seconds. Consistency is a steady pace modifier here, not random lap variation; tyres, traffic and mistakes are not simulated. Signing fees rise with squared stats; releases refund 40%. Export is an inspection record; a team importer is not implemented.</p>
   </Dialog>;
 }
