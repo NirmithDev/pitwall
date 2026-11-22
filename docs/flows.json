@@ -30,6 +30,10 @@
     {
       "path": "docs/guide/07-multiplayer.md",
       "title": "Private multiplayer races"
+    },
+    {
+      "path": "docs/guide/08-driver-recruitment.md",
+      "title": "Fictional driver recruitment and builds"
     }
   ],
   "sharedComponents": [
@@ -901,6 +905,118 @@
         "backend/Pitwall.Api/Program.cs",
         "backend/Pitwall.RoomChecks/Program.cs",
         "frontend/e2e/multiplayer.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-01",
+      "title": "Open and initialize your team",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-01",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-02",
+      "title": "Scout generated prospects",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-02",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-03",
+      "title": "Sign and release roster drivers",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-03",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-04",
+      "title": "Build and sign a custom driver",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-04",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-05",
+      "title": "Select and swap race seats",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-05",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-06",
+      "title": "Apply recruited builds and host them in a new room",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-06",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-07",
+      "title": "Recover from storage failures or another tab's changes",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-07",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-08",
+      "title": "Export a record or explicitly start fresh",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-08",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
       ]
     }
   ]

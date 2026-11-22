@@ -48,6 +48,7 @@ const StrategyLab = lazy(() => import("./StrategyLab"));
 const RaceAnalysis = lazy(() => import("./RaceAnalysis"));
 const PaceBacktest = lazy(() => import("./PaceBacktest"));
 const MultiplayerRooms = lazy(() => import("./MultiplayerRooms"));
+const DriverRecruitment = lazy(() => import("./DriverRecruitment"));
 import "./lab.css";
 import { momentLink, readMoment } from "./replay-link";
 import { ensureTiming } from "./import-job";
@@ -91,7 +92,8 @@ function App() {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showBacktest, setShowBacktest] = useState(false);
   const [showRooms, setShowRooms] = useState(() => new URLSearchParams(location.search).has("room"));
-  const activeTool = showRooms ? "rooms" : showLibrary
+  const [showRecruitment, setShowRecruitment] = useState(false);
+  const activeTool = showRecruitment ? "recruitment" : showRooms ? "rooms" : showLibrary
     ? "library"
     : shareLink
       ? "share"
@@ -105,6 +107,7 @@ function App() {
               ? "backtest"
               : "none";
   const closeTools = () => {
+    setShowRecruitment(false);
     setShowRooms(false);
     setShowLibrary(false);
     setShareLink(null);
@@ -193,6 +196,7 @@ function App() {
         showAnalysis ||
         showBacktest ||
         showRooms ||
+        showRecruitment ||
         document.querySelector("dialog[open]")
       )
         return;
@@ -222,6 +226,7 @@ function App() {
     showAnalysis,
     showBacktest,
     showRooms,
+    showRecruitment,
   ]);
   useEffect(() => {
     if (!notice) return;
@@ -419,6 +424,7 @@ function App() {
         </section>
         <div className="lab-launcher">
           <span>REPLAY TOOLS</span>
+          <button onClick={() => {setPlaying(false);setShowRecruitment(true);}}>Driver recruitment</button>
           <button onClick={() => {setPlaying(false);setShowRooms(true);}}>Multiplayer rooms</button>
           <button
             onClick={() => {
@@ -986,6 +992,7 @@ function App() {
             />
           )}
           {showRooms && <MultiplayerRooms onClose={() => setShowRooms(false)} />}
+          {showRecruitment && <DriverRecruitment onClose={() => setShowRecruitment(false)} />}
           {showAnalysis && (
             <RaceAnalysis
               race={race}

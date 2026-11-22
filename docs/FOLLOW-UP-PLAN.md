@@ -49,6 +49,8 @@ The first v1.4 increment implements finite fictional sessions (1–50 laps), det
 
 The private-room increment adds a server-owned C# simulation, SignalR guest connections, exclusive driver claims/readiness, shared host controls, live calls, spectator support, reconnect and explicit driver/host handover. See [multiplayer flows](guide/07-multiplayer.md). Room storage is in memory, independent of PostgreSQL; public hosting, durable room recovery and multiple-instance coordination remain future scope.
 
+Fictional recruiting now adds generated prospects/fees, a browser-local budget and six-driver roster, custom stat allocation and two selected/swappable builds. Applying a lineup copies bounded pace/service values into the local sandbox and future room definitions. See [recruitment](guide/08-driver-recruitment.md). Training, wages, seasons, protected server economies and car-part upgrades remain future scope.
+
 ## Branch and validation workflow
 
 Use a focused feature branch for each milestone, run timing/camera unit tests and browser tests, and review into `develop`. Promote to `master` once the integration branch is ready. Container delivery continues through the existing GitHub Actions workflow.

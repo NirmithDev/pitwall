@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 const MultiplayerRooms = lazy(() => import("./MultiplayerRooms"));
+const DriverRecruitment = lazy(() => import("./DriverRecruitment"));
 import {
   downloadJson,
   parseTrack,
@@ -38,6 +39,7 @@ export default function CircuitSandbox({
 }) {
   const [setup, setSetup] = useState(() => readSandbox(track));
   const [showRoom, setShowRoom] = useState(false);
+  const [showRecruitment, setShowRecruitment] = useState(false);
   const [session, setSession] = useState(() => ({
     states: initialGrid(setup.drivers), elapsed: 0,
   }));
@@ -130,6 +132,8 @@ export default function CircuitSandbox({
         </p>
       </div>
       <button className="save-button" onClick={() => {setRunning(false);setShowRoom(true);}}>Host this setup with friends</button>
+      <button className="lab-button" onClick={() => {setRunning(false);setShowRecruitment(true);}}>Recruit and manage drivers</button>
+      {showRecruitment && <Suspense fallback={<p role="status">Loading recruitment…</p>}><DriverRecruitment setup={setup} onApply={change} onClose={() => setShowRecruitment(false)} /></Suspense>}
       {showRoom && <Suspense fallback={<p role="status">Loading multiplayer…</p>}><MultiplayerRooms initialTrack={track} initialSetup={setup} onClose={() => setShowRoom(false)} /></Suspense>}
       <div className="sandbox-controls">
         <label className="lab-field">
