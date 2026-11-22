@@ -11,9 +11,20 @@ The studio holds a draft. Saving/exporting is explicit; closing it is not an aut
 
 **How:** Open **Custom circuit studio**. Edit the starter circuit, choose **New circuit** for a new starter/ID, or **Copy replay outline as draft** when the open race has enough outline points. Enter **Circuit name**.
 
-**Result and storage:** The default is a ten-point **Midnight circuit**, not a blank canvas. An outline copy is resampled/scaled as a new independent draft named **My outline remix**. Names are 1–48 trimmed characters.
+**Result and storage:** The default is a ten-point **Midnight circuit**, not a blank canvas. An outline copy is fitted with its aspect ratio retained, simplified if necessary to 6–120 separated valid points, and created as an independent draft named **My outline remix**. Copies use zero extra corner rounding to retain the sampled shape; you can change it later. Names are 1–48 trimmed characters.
 
 **Recovery and limits:** Copying an outline does not copy telemetry, drivers or race timing. Validate the new shape before saving. New/copy replaces the working draft; recorded edit history may allow Undo until the studio closes, but explicit saved/exported copies are safer.
+
+<a id="studio-10"></a>
+## STUDIO-10 — Race signed drivers on an existing replay circuit
+
+**What:** Use an existing race's approximate circuit outline as a venue for a separate fictional race.
+
+**How:** Open/import a race through **Browse races**, then choose **Race this circuit** in the replay toolbar. The studio opens directly in sandbox mode with a new **[Circuit] [Year] · sandbox** draft. From an existing studio, **Race on [Circuit] [Year]** prepares the open replay's outline and replaces the working draft. Save an edited draft before switching.
+
+**Result and storage:** The new draft has its own ID, fitted outline and fictional sector divisions. A new unsaved grid uses available selected signed drivers automatically. The pit lane is generated and validated separately; concave outlines can choose another short connected entry/exit route. Set base pace, distance and pit plans as desired, run locally, or host this setup in a new multiplayer room. Saving the circuit/race setup is explicit.
+
+**Recovery and limits:** This does not reproduce real driver performance, measured sector boundaries, an official pit lane or the original race distance/time. Base pace and race distance use sandbox defaults. Missing outlines disable the shortcut. Outlines outside 6–5,000 finite samples or unable to simplify safely are rejected; a failed toolbar launch reports the failure and shows an editable starter rather than pretending it is the requested venue. Inspect pit validation and edit a lane if no generated route fits. The historical replay remains paused at its previous time with its recorded geometry/results unchanged.
 
 <a id="studio-02"></a>
 ## STUDIO-02 — Add, move and remove control points

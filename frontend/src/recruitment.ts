@@ -1,6 +1,10 @@
-import type { SandboxDriver, SandboxSetup } from "./sandbox";
+import {newSandboxDriver, type SandboxDriver, type SandboxSetup} from "./sandbox";
 
 export const teamKey = "pitwall.recruitment.v1";
+export const teamUpdatedEvent = "pitwall-team-updated";
+function announceTeam() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(teamUpdatedEvent));
+}
 export const startingCredits = 12000;
 export const customPoints = 210;
 export const refreshFee = 250;
@@ -75,7 +79,10 @@ function hire(t: Team, driver: RecruitDriver): Team {
   if (t.credits < cost) throw new Error("Not enough credits to sign this driver.");
   if (t.roster.some(d => d.name.toLowerCase() === driver.name.toLowerCase())) throw new Error("A signed driver already uses this name. Use another name or prospect.");
   if ([...t.roster, ...t.market].some(d => d.id === driver.id && d !== driver)) throw new Error("This driver ID is already in use.");
-  return {...t, credits: t.credits - cost, roster: [...t.roster, driver], market: t.market.filter(d => d.id !== driver.id)};
+  const lineup = [...t.lineup] as Team["lineup"];
+  const empty = lineup.findIndex(id => id === null);
+  if (empty >= 0) lineup[empty] = driver.id;
+  return {...t, credits: t.credits - cost, roster: [...t.roster, driver], market: t.market.filter(d => d.id !== driver.id), lineup};
 }
 export function signDriver(team: Team, id: string): Team {
   const d = team.market.find(d => d.id === id);
@@ -112,6 +119,26 @@ export function applyLineup(team: Team, setup: SandboxSetup): SandboxSetup {
     ...driverEffects(d!.stats), pitLap: setup.drivers[i]?.pitLap ?? 0}));
   return {...setup, drivers: [...converted, ...setup.drivers.slice(2).filter(d => !converted.some(c => c.id === d.id))]};
 }
+export function assignRecruitToGrid(team: Team, setup: SandboxSetup, slot: number, id: string): SandboxSetup {
+  const recruit = team.roster.find(d => d.id === id);
+  if (!recruit || !Number.isInteger(slot) || slot < 0 || slot >= setup.drivers.length) throw new Error("Choose a signed driver and an existing grid slot.");
+  const drivers = setup.drivers.map(d => ({...d}));
+  const profileId = `recruit:${recruit.id}`;
+  const other = drivers.findIndex(d => d.id === profileId);
+  if (other >= 0 && other !== slot) drivers[other] = {...drivers[slot], pitLap: drivers[other].pitLap};
+  drivers[slot] = {id: profileId, name: recruit.name, color: recruit.color, ...driverEffects(recruit.stats), pitLap: drivers[slot].pitLap};
+  return {...setup, drivers};
+}
+export function availableLineup(team: Team, setup: SandboxSetup): SandboxSetup {
+  let next = setup;
+  team.lineup.forEach((id,i) => {
+    if (id !== null && team.roster.some(d => d.id === id)) {
+      if(i>=next.drivers.length)next={...next,drivers:[...next.drivers,newSandboxDriver(i)]};
+      next = assignRecruitToGrid(team,next,i,id);
+    }
+  });
+  return next;
+}
 
 export function readTeam(): {team: Team; warning: string} {
   try {
@@ -130,6 +157,7 @@ export async function saveTeam(expected: Team, next: Team): Promise<Team> {
     } else if (expected.revision !== 0) throw new Error("Saved team was removed in another tab. Load latest team first.");
     const saved = parseTeam({...next, revision: expected.revision + 1});
     localStorage.setItem(teamKey, JSON.stringify(saved));
+    announceTeam();
     return saved;
   };
   return typeof navigator !== "undefined" && navigator.locks
@@ -141,6 +169,7 @@ export async function ensureTeam(candidate: Team): Promise<Team> {
     if (raw !== null) return parseTeam(JSON.parse(raw));
     const saved = parseTeam({...candidate, revision: 1});
     localStorage.setItem(teamKey, JSON.stringify(saved));
+    announceTeam();
     return saved;
   };
   return typeof navigator !== "undefined" && navigator.locks
@@ -150,6 +179,7 @@ export async function resetTeam(): Promise<Team> {
   const write = () => {
     const team = {...newTeam(), revision: 1};
     localStorage.setItem(teamKey, JSON.stringify(team));
+    announceTeam();
     return team;
   };
   return typeof navigator !== "undefined" && navigator.locks

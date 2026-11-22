@@ -1018,6 +1018,38 @@
         "frontend/src/CircuitSandbox.tsx",
         "frontend/e2e/recruitment.spec.ts"
       ]
+    },
+    {
+      "id": "STUDIO-10",
+      "title": "Race signed drivers on an existing replay circuit",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-10",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/sandbox.ts",
+        "frontend/src/replay-circuit.ts",
+        "frontend/src/replay-circuit.test.ts",
+        "frontend/e2e/roster-tracks.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-09",
+      "title": "Sync signed drivers directly into a sandbox",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-09",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/sandbox.ts",
+        "frontend/src/replay-circuit.ts",
+        "frontend/src/replay-circuit.test.ts",
+        "frontend/e2e/roster-tracks.spec.ts"
+      ]
     }
   ]
 }

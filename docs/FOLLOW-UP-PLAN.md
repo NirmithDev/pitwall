@@ -51,6 +51,8 @@ The private-room increment adds a server-owned C# simulation, SignalR guest conn
 
 Fictional recruiting now adds generated prospects/fees, a browser-local budget and six-driver roster, custom stat allocation and two selected/swappable builds. Applying a lineup copies bounded pace/service values into the local sandbox and future room definitions. See [recruitment](guide/08-driver-recruitment.md). Training, wages, seasons, protected server economies and car-part upgrades remain future scope.
 
+Roster/venue integration now fills empty team seats on signing, keeps signed choices current in an open sandbox, applies selected profiles to new unsaved grids and supports explicit partial sync/per-slot swaps without silently resetting active runs. **Race this circuit** prepares the open replay's approximate outline as a validated independent race venue, with a generated connected pit route and the selected signed drivers. Historical results remain separate; public hosting and a protected cross-device team economy are still later work.
+
 ## Branch and validation workflow
 
 Use a focused feature branch for each milestone, run timing/camera unit tests and browser tests, and review into `develop`. Promote to `master` once the integration branch is ready. Container delivery continues through the existing GitHub Actions workflow.

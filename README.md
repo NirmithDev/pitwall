@@ -27,6 +27,7 @@ The [handbook](docs/USER-GUIDE.md) documents every current user flow: steps, def
 - Finite 1–50 lap fictional races with exact finish times/results, plus selected-driver live pit calls, cancellation before entry and repeat visits. See [race sessions](docs/guide/05-race-sandbox.md#sandbox-08).
 - Private multiplayer rooms with a C#-owned simulation clock, SignalR snapshots, guest driver claims/readiness, host controls, live pit calls, reconnect, spectator support, guest removal and driver/host handover. Rooms are temporary and use one API instance. See [the multiplayer guide](docs/guide/07-multiplayer.md).
 - Fictional driver recruitment: generated stat-based prospects, a 12,000-credit budget, six-driver roster, custom 210-point builds, two swappable race seats, browser persistence and lineup application to local/new multiplayer races. See [recruiting flows](docs/guide/08-driver-recruitment.md).
+- Live signed-roster availability in the sandbox, per-slot build selection and partial-lineup sync. **Race this circuit** starts a separate fictional race on the current replay's approximate outline with your selected signed drivers; generated pit lanes are validated before use.
 - On-demand tool bundles, recovery from tool download failures, indexed replay lookups, a read-only setup doctor, and a one-command local preview.
 - Light/dark themes with a header toggle, system preference on first visit, and a browser-saved choice across races.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.

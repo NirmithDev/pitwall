@@ -88,6 +88,7 @@ function App() {
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [positionSource, setPositionSource] = useState<PositionSource>("lap");
   const [showTrackEditor, setShowTrackEditor] = useState(false);
+  const [raceOnReplay, setRaceOnReplay] = useState(false);
   const [showStrategy, setShowStrategy] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showBacktest, setShowBacktest] = useState(false);
@@ -424,6 +425,7 @@ function App() {
         </section>
         <div className="lab-launcher">
           <span>REPLAY TOOLS</span>
+          <button disabled={race.track.length<6} onClick={()=>{setPlaying(false);setRaceOnReplay(true);setShowTrackEditor(true);}}>Race this circuit</button>
           <button onClick={() => {setPlaying(false);setShowRecruitment(true);}}>Driver recruitment</button>
           <button onClick={() => {setPlaying(false);setShowRooms(true);}}>Multiplayer rooms</button>
           <button
@@ -460,6 +462,7 @@ function App() {
           <button
             onClick={() => {
               setPlaying(false);
+              setRaceOnReplay(false);
               setShowTrackEditor(true);
             }}
           >
@@ -988,6 +991,8 @@ function App() {
           {showTrackEditor && (
             <TrackEditor
               outline={race.track}
+              replayLabel={`${race.circuit} ${race.year}`}
+              startOnReplayCircuit={raceOnReplay}
               onClose={() => setShowTrackEditor(false)}
             />
           )}

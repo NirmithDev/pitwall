@@ -1,7 +1,7 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 import {newTrack} from "./custom-track";
 import {parseSandbox, sandboxDefaults} from "./sandbox";
-import {applyLineup, assignSeat, createDriver, driverEffects, ensureTeam, generateMarket, newTeam, parseTeam, refreshMarket, releaseDriver, releaseRefund, saveTeam, signDriver, signingFee, teamKey, type RecruitDriver} from "./recruitment";
+import {applyLineup, assignRecruitToGrid, assignSeat, availableLineup, createDriver, driverEffects, ensureTeam, generateMarket, newTeam, parseTeam, refreshMarket, releaseDriver, releaseRefund, saveTeam, signDriver, signingFee, teamKey, type RecruitDriver} from "./recruitment";
 
 const rookie = (id: string, stats = {pace:70,consistency:70,pitDiscipline:70}): RecruitDriver => ({id,name:id,color:"#64d2b6",origin:"custom",stats});
 describe("fictional recruiting and team economy", () => {
@@ -84,5 +84,21 @@ describe("fictional recruiting and team economy", () => {
     vi.stubGlobal("localStorage",{getItem:()=>JSON.stringify(signed),setItem:()=>{throw new Error("Storage denied");}});
     await expect(saveTeam(signed,refreshMarket(signed))).rejects.toThrow(/denied/);
     expect(JSON.parse(stored.get(teamKey)!)).toEqual(signed);
+  });
+  it("fills empty team seats on signing and applies one signed seat without requiring a full team",()=>{
+    const team=createDriver(newTeam(1),rookie("Solo"));
+    expect(team.lineup).toEqual(["Solo",null]);
+    const setup=sandboxDefaults(newTrack()),next=availableLineup(team,setup);
+    expect(next.drivers[0].name).toBe("Solo");expect(next.drivers[1]).toEqual(setup.drivers[1]);
+    const released=releaseDriver(team,"Solo");expect(availableLineup(released,setup)).toEqual(setup);
+  });
+  it("swaps signed builds between grid slots without duplicating IDs or moving planned stops",()=>{
+    const team=createDriver(createDriver(newTeam(1),rookie("One")),rookie("Two"));
+    const setup=applyLineup(team,sandboxDefaults(newTrack()));
+    const next=assignRecruitToGrid(team,setup,1,"One");
+    expect(next.drivers.map(d=>d.id)).toEqual(["recruit:Two","recruit:One",setup.drivers[2].id]);
+    expect(next.drivers.map(d=>d.pitLap)).toEqual(setup.drivers.map(d=>d.pitLap));
+    expect(()=>assignRecruitToGrid(team,setup,9,"One")).toThrow();
+    expect(()=>assignRecruitToGrid(team,setup,0,"not signed")).toThrow();
   });
 });

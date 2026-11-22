@@ -33,7 +33,7 @@ Recruitment manages fictional driver profiles. It is separate from real players 
 
 **How:** Choose **Sign [name] · [fee] credits**. The prospect moves to **Your roster**. **Release [name] · +[refund]** removes a signed driver and returns the displayed amount. A roster driver outside the two selected seats is a reserve.
 
-**Result and storage:** Signing deducts the fee and saves the roster/market/budget together. The fee is `500 + round((pace² × 0.45 + consistency² × 0.25 + pitDiscipline² × 0.15) / 25) × 25`. Release refunds 40% of that driver's signing fee, rounded down, and clears its selected seats. Release does not return a driver to the market. Existing race copies retain that driver until replaced.
+**Result and storage:** Signing deducts the fee and saves the roster/market/budget together. A signing fills the first empty selected race seat automatically; further signings become reserves when both are occupied. The fee is `500 + round((pace² × 0.45 + consistency² × 0.25 + pitDiscipline² × 0.15) / 25) × 25`. Release refunds 40% of that driver's signing fee, rounded down, and clears its selected seats. Release does not return a driver to the market. Existing race copies retain that driver until replaced.
 
 **Recovery and limits:** Insufficient funds or a full roster disable signing. Re-signing a removed market ID is rejected. Signed names must be distinct ignoring case. Releases are immediate and have no undo; the refund is smaller than the signing cost. There are no recurring wages or race income yet.
 
@@ -97,3 +97,14 @@ Recruitment manages fictional driver profiles. It is separate from real players 
 **Result and storage:** A confirmed reset replaces this browser origin's recruiting record. Existing circuits, local race grid copies and multiplayer rooms remain separate. Resetting does not save or clear those copies. If you are viewing an unreadable saved record's fallback, back up the raw stored data before resetting; exporting the displayed fallback does not recover the old record.
 
 **Recovery and limits:** There is no team importer or reset undo. A failed reset write retains the old record and reports an error. Other recruiting tabs must load the latest team after a reset. Credits are fictional, so a fresh-team reset is allowed; this is not a protected online economy.
+
+<a id="team-09"></a>
+## TEAM-09 — Sync signed drivers directly into a sandbox
+
+**What:** Access the signed roster from the race grid without reopening recruitment or assembling a full two-driver team.
+
+**How:** Inspect **Signed team drivers** in the sandbox. Signings/releases/seat selections update its available roster in the same window or another tab. Use **Sync team lineup and restart** to apply all available selected seats, or choose a profile from **Signed driver** in an individual grid slot. One signed/selected driver is enough for this flow.
+
+**Result and storage:** New unsaved grids automatically use available selected team seats; a stored circuit/race setup retains its own grid until explicitly synced. Signing itself never resets a running race. A grid selection copies the profile's name, colour, derived pace and service duration. Choosing a build already in another slot swaps the builds while keeping each slot's planned pit lap. Sync/selection records ordinary sandbox undo history and restarts its local run; geometry, base pace and distance stay intact. Selecting team seat two can grow a one-driver grid to two.
+
+**Recovery and limits:** Save circuit/race setup separately to persist a copied grid. Unreadable roster storage disables selection/sync while leaving the manual grid usable. Releasing a profile removes it from available choices but does not erase an already copied grid driver. Existing multiplayer rooms keep their frozen driver definitions. Shared browser storage does not synchronize across devices or different origins/profiles.

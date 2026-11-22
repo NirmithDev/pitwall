@@ -99,7 +99,7 @@ export function sandboxDefaults(track: CustomTrack): SandboxSetup {
       Math.max(20, Math.min(500, p[1] + ((mid[1] - center[1]) / length) * 70)),
     ),
   ];
-  return {
+  const setup: SandboxSetup = {
     version: 1,
     raceLaps: 10,
     baseLapSeconds: 90,
@@ -108,6 +108,19 @@ export function sandboxDefaults(track: CustomTrack): SandboxSetup {
     pitControls: [offset(a), offset(b)],
     drivers: Array.from({ length: 3 }, (_, i) => newSandboxDriver(i)),
   };
+  if(!validateSandbox(track,setup).length)return setup;
+  // Concave replay outlines may need a short lane on a different straight.
+  for(const span of [.08,.12,.16])for(let index=0;index<20;index++){
+    const entry=(19-index)/20,exit=Math.round(((entry+span)%1)*100)/100;
+    const a=pointOnRoute(main,entry),b=pointOnRoute(main,exit);
+    const dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy)||1;
+    for(const side of [1,-1])for(const offset of [30,50,70]){
+      const shift=(p: Point): Point=>[Math.round(Math.max(20,Math.min(780,p[0]-dy/length*offset*side))),Math.round(Math.max(20,Math.min(500,p[1]+dx/length*offset*side)))];
+      const candidate={...setup,entry,exit,pitControls:[shift(a),shift(b)]};
+      if(!validateSandbox(track,candidate).length)return candidate;
+    }
+  }
+  return setup; // Leave validation/recovery available when no safe generated lane fits.
 }
 export function parseSandbox(raw: unknown): SandboxSetup {
   if (!raw || typeof raw !== "object")
