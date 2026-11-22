@@ -144,6 +144,15 @@
 .room-status { justify-content: space-between; }
 .room-seat { padding: 12px 0; border-bottom: 1px solid var(--line); }
 .room-seat > span { flex: 1 1 100%; }
+.recruit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 16px 0; }
+.recruit-card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; min-width: 0; }
+.recruit-card h4 { margin: 0; padding-left: 10px; border-left: 4px solid; font-size: 15px; overflow-wrap: anywhere; }
+.recruit-card .room-status { margin: 0 0 14px; }
+.recruit-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.recruit-stats span, .recruit-stats strong { display: block; font-size: 11px; }
+.recruit-stats strong { font-size: 22px; margin: 6px 0; }
+.recruit-stats meter { width: 100%; height: 8px; accent-color: #64d2b6; }
+@media (max-width: 700px) { .recruit-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 700px) { .room-entry-grid { grid-template-columns: minmax(0, 1fr); } }
 .sandbox-stage {
   display: grid;

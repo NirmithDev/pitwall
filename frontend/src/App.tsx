@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import {version as appVersion} from "../package.json";
 import {
   Activity,
   ArrowLeft,
@@ -48,6 +49,8 @@ const StrategyLab = lazy(() => import("./StrategyLab"));
 const RaceAnalysis = lazy(() => import("./RaceAnalysis"));
 const PaceBacktest = lazy(() => import("./PaceBacktest"));
 const MultiplayerRooms = lazy(() => import("./MultiplayerRooms"));
+const DriverRecruitment = lazy(() => import("./DriverRecruitment"));
+const LocalChampionship = lazy(() => import("./LocalChampionship"));
 import "./lab.css";
 import { momentLink, readMoment } from "./replay-link";
 import { ensureTiming } from "./import-job";
@@ -87,11 +90,14 @@ function App() {
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [positionSource, setPositionSource] = useState<PositionSource>("lap");
   const [showTrackEditor, setShowTrackEditor] = useState(false);
+  const [raceOnReplay, setRaceOnReplay] = useState(false);
   const [showStrategy, setShowStrategy] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [showBacktest, setShowBacktest] = useState(false);
   const [showRooms, setShowRooms] = useState(() => new URLSearchParams(location.search).has("room"));
-  const activeTool = showRooms ? "rooms" : showLibrary
+  const [showRecruitment, setShowRecruitment] = useState(false);
+  const [showChampionship, setShowChampionship] = useState(false);
+  const activeTool = showChampionship ? "championship" : showRecruitment ? "recruitment" : showRooms ? "rooms" : showLibrary
     ? "library"
     : shareLink
       ? "share"
@@ -105,6 +111,8 @@ function App() {
               ? "backtest"
               : "none";
   const closeTools = () => {
+    setShowChampionship(false);
+    setShowRecruitment(false);
     setShowRooms(false);
     setShowLibrary(false);
     setShareLink(null);
@@ -193,6 +201,8 @@ function App() {
         showAnalysis ||
         showBacktest ||
         showRooms ||
+        showRecruitment ||
+        showChampionship ||
         document.querySelector("dialog[open]")
       )
         return;
@@ -222,6 +232,8 @@ function App() {
     showAnalysis,
     showBacktest,
     showRooms,
+    showRecruitment,
+    showChampionship,
   ]);
   useEffect(() => {
     if (!notice) return;
@@ -317,7 +329,7 @@ function App() {
           pitwall<span>╱</span>
         </a>
         <div className="product-label">
-          RACE REPLAY LAB <span className="beta">V1.3</span>
+          RACE REPLAY LAB <span className="beta">V{appVersion}</span>
         </div>
         <div className="topbar-right">
           <ThemeToggle />
@@ -419,6 +431,9 @@ function App() {
         </section>
         <div className="lab-launcher">
           <span>REPLAY TOOLS</span>
+          <button onClick={()=>{setPlaying(false);setShowChampionship(true);}}>Local championship</button>
+          <button disabled={race.track.length<6} onClick={()=>{setPlaying(false);setRaceOnReplay(true);setShowTrackEditor(true);}}>Race this circuit</button>
+          <button onClick={() => {setPlaying(false);setShowRecruitment(true);}}>Driver recruitment</button>
           <button onClick={() => {setPlaying(false);setShowRooms(true);}}>Multiplayer rooms</button>
           <button
             onClick={() => {
@@ -454,6 +469,7 @@ function App() {
           <button
             onClick={() => {
               setPlaying(false);
+              setRaceOnReplay(false);
               setShowTrackEditor(true);
             }}
           >
@@ -982,10 +998,14 @@ function App() {
           {showTrackEditor && (
             <TrackEditor
               outline={race.track}
+              replayLabel={`${race.circuit} ${race.year}`}
+              startOnReplayCircuit={raceOnReplay}
               onClose={() => setShowTrackEditor(false)}
             />
           )}
           {showRooms && <MultiplayerRooms onClose={() => setShowRooms(false)} />}
+          {showRecruitment && <DriverRecruitment onClose={() => setShowRecruitment(false)} />}
+          {showChampionship && <LocalChampionship race={race} onClose={()=>setShowChampionship(false)} />}
           {showAnalysis && (
             <RaceAnalysis
               race={race}

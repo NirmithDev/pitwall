@@ -3,6 +3,7 @@ import Dialog from "./Dialog";
 import NumberField from "./NumberField";
 import CircuitSandbox from "./CircuitSandbox";
 import { pointOnTrack } from "./race";
+import {circuitFromReplay} from "./replay-circuit";
 import { roundedTrack } from "./rounded-track";
 import {
   downloadJson,
@@ -19,13 +20,22 @@ import {
 export default function TrackEditor({
   outline,
   onClose,
+  replayLabel = "Replay circuit",
+  startOnReplayCircuit = false,
 }: {
   outline: Point[];
   onClose: () => void;
+  replayLabel?: string;
+  startOnReplayCircuit?: boolean;
 }) {
-  const [draft, setDraft] = useState<CustomTrack>(newTrack);
-  const [workspace, setWorkspace] = useState<"edit" | "race">("edit");
-  const [hasSandbox, setHasSandbox] = useState(false);
+  const [initial] = useState(()=>{
+    if(startOnReplayCircuit)try{return {track:circuitFromReplay(outline,`${replayLabel} · sandbox`),racing:true,error:""};}
+    catch(e){return {track:newTrack(),racing:false,error:`Could not prepare ${replayLabel}: ${(e as Error).message} A starter draft is shown for editing.`};}
+    return {track:newTrack(),racing:false,error:""};
+  });
+  const [draft, setDraft] = useState<CustomTrack>(initial.track);
+  const [workspace, setWorkspace] = useState<"edit" | "race">(initial.racing?"race":"edit");
+  const [hasSandbox, setHasSandbox] = useState(initial.racing);
   const [saved, setSaved] = useState(readTracks);
   const [savedId, setSavedId] = useState("");
   const [selected, setSelected] = useState(0);
@@ -125,6 +135,11 @@ export default function TrackEditor({
         keys. Geometry and preview markers belong to this studio; your
         historical replay stays separate.
       </p>
+      {initial.error && <p role="alert">{initial.error}</p>}
+      <div className="lab-actions"><button className="lab-button" disabled={outline.length<6} onClick={()=>{
+        try {replace(circuitFromReplay(outline,`${replayLabel} · sandbox`));setHasSandbox(true);setWorkspace("race");}
+        catch(e){setMessage((e as Error).message);}
+      }}>Race on {replayLabel}</button><span className="lab-note">Uses this replay's approximate circuit outline, with fictional pace, sectors and pit lane. Switching replaces the working draft; save it first.</span></div>
       <div className="analysis-tabs">
         <button
           className="lab-button"
@@ -288,25 +303,8 @@ export default function TrackEditor({
                   className="lab-button"
                   disabled={outline.length < 6}
                   onClick={() => {
-                    const step = Math.max(1, Math.ceil(outline.length / 40));
-                    const points = outline
-                      .filter((_, i) => i % step === 0)
-                      .map(
-                        (p) =>
-                          [
-                            Math.round(p[0] * 0.9 + 40),
-                            Math.round((p[1] * 440) / 520 + 40),
-                          ] as Point,
-                      );
-                    replace({
-                      ...newTrack(),
-                      name: "My outline remix",
-                      points,
-                      sectorEnds: [
-                        Math.floor(points.length / 3),
-                        Math.floor((points.length * 2) / 3),
-                      ],
-                    });
+                    try {replace(circuitFromReplay(outline,"My outline remix"));}
+                    catch(e){setMessage((e as Error).message);}
                   }}
                 >
                   Copy replay outline as draft

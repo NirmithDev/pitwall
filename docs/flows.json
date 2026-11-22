@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "productVersion": "1.3.0",
+  "productVersion": "1.4.0",
   "lastReviewed": "2026-11-21",
   "chapters": [
     {
@@ -30,6 +30,14 @@
     {
       "path": "docs/guide/07-multiplayer.md",
       "title": "Private multiplayer races"
+    },
+    {
+      "path": "docs/guide/08-driver-recruitment.md",
+      "title": "Fictional driver recruitment and builds"
+    },
+    {
+      "path": "docs/guide/09-championship.md",
+      "title": "Local three-race championships"
     }
   ],
   "sharedComponents": [
@@ -901,6 +909,254 @@
         "backend/Pitwall.Api/Program.cs",
         "backend/Pitwall.RoomChecks/Program.cs",
         "frontend/e2e/multiplayer.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-01",
+      "title": "Open and initialize your team",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-01",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-02",
+      "title": "Scout generated prospects",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-02",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-03",
+      "title": "Sign and release roster drivers",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-03",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-04",
+      "title": "Build and sign a custom driver",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-04",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-05",
+      "title": "Select and swap race seats",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-05",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-06",
+      "title": "Apply recruited builds and host them in a new room",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-06",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-07",
+      "title": "Recover from storage failures or another tab's changes",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-07",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-08",
+      "title": "Export a record or explicitly start fresh",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-08",
+      "sources": [
+        "frontend/src/DriverRecruitment.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/recruitment.test.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/e2e/recruitment.spec.ts"
+      ]
+    },
+    {
+      "id": "STUDIO-10",
+      "title": "Race signed drivers on an existing replay circuit",
+      "guide": "docs/guide/04-circuit-studio.md",
+      "anchor": "studio-10",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/sandbox.ts",
+        "frontend/src/replay-circuit.ts",
+        "frontend/src/replay-circuit.test.ts",
+        "frontend/e2e/roster-tracks.spec.ts"
+      ]
+    },
+    {
+      "id": "TEAM-09",
+      "title": "Sync signed drivers directly into a sandbox",
+      "guide": "docs/guide/08-driver-recruitment.md",
+      "anchor": "team-09",
+      "sources": [
+        "frontend/src/App.tsx",
+        "frontend/src/TrackEditor.tsx",
+        "frontend/src/CircuitSandbox.tsx",
+        "frontend/src/recruitment.ts",
+        "frontend/src/sandbox.ts",
+        "frontend/src/replay-circuit.ts",
+        "frontend/src/replay-circuit.test.ts",
+        "frontend/e2e/roster-tracks.spec.ts"
+      ]
+    },
+    {
+      "id": "CUP-01",
+      "title": "Enter a championship with your signed lineup",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-01",
+      "sources": [
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/championship.ts",
+        "frontend/src/championship.test.ts",
+        "frontend/e2e/championship.spec.ts",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "CUP-02",
+      "title": "Choose the three-round calendar",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-02",
+      "sources": [
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/championship.ts",
+        "frontend/src/championship.test.ts",
+        "frontend/e2e/championship.spec.ts",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "CUP-03",
+      "title": "Start, run and make team pit decisions",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-03",
+      "sources": [
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/championship.ts",
+        "frontend/src/championship.test.ts",
+        "frontend/e2e/championship.spec.ts",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "CUP-04",
+      "title": "Read results and championship standings",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-04",
+      "sources": [
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/championship.ts",
+        "frontend/src/championship.test.ts",
+        "frontend/e2e/championship.spec.ts",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "CUP-05",
+      "title": "Save and resume a race or between-round progress",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-05",
+      "sources": [
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/championship.ts",
+        "frontend/src/championship.test.ts",
+        "frontend/e2e/championship.spec.ts",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "CUP-06",
+      "title": "Recover from failed saves or another editing tab",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-06",
+      "sources": [
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/championship.ts",
+        "frontend/src/championship.test.ts",
+        "frontend/e2e/championship.spec.ts",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "CUP-07",
+      "title": "Export a cup or replace it with a new championship",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-07",
+      "sources": [
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/championship.ts",
+        "frontend/src/championship.test.ts",
+        "frontend/e2e/championship.spec.ts",
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "CUP-08",
+      "title": "Recover an unreadable saved championship",
+      "guide": "docs/guide/09-championship.md",
+      "anchor": "cup-08",
+      "sources": [
+        "frontend/src/LocalChampionship.tsx",
+        "frontend/src/championship.ts",
+        "frontend/src/championship.test.ts",
+        "frontend/e2e/championship.spec.ts",
+        "frontend/src/App.tsx"
       ]
     }
   ]

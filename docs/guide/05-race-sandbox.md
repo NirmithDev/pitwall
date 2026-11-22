@@ -37,6 +37,10 @@ This is a deterministic geometry/pace/service preview. It does not simulate grip
 
 **Recovery and limits:** Empty/invalid driver settings block running/saving. Numeric inputs accept incomplete typing and apply bounds on blur/Enter. Scheduled stops at/beyond the finish have no effect. Live calls can add visits; there are no compound or car-part controls yet.
 
+Use **Recruit and manage drivers** for [fictional recruiting and custom stat builds](08-driver-recruitment.md). Applying that lineup replaces the first two grid drivers with derived pace/service settings and restarts this sandbox; it is separate from real players controlling multiplayer seats.
+
+The signed roster also appears directly in each grid slot. [TEAM-09](08-driver-recruitment.md#team-09) covers automatic availability, fresh-grid defaults, partial-lineup sync and swapping existing signed builds. [STUDIO-10](04-circuit-studio.md#studio-10) opens a fictional race on the current replay's circuit outline. New default pit lanes try another short connected route if the initial lane crosses a concave circuit; a saved invalid lane still needs explicit editing/recovery.
+
 <a id="sandbox-03"></a>
 ## SANDBOX-03 — Attach and edit the pit lane
 

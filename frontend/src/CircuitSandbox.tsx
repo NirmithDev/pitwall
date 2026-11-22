@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 const MultiplayerRooms = lazy(() => import("./MultiplayerRooms"));
+const DriverRecruitment = lazy(() => import("./DriverRecruitment"));
 import {
   downloadJson,
   parseTrack,
@@ -9,6 +10,7 @@ import {
   type Point,
 } from "./custom-track";
 import NumberField from "./NumberField";
+import {assignRecruitToGrid, availableLineup, readTeam, teamKey, teamUpdatedEvent} from "./recruitment";
 import {
   advanceRace,
   nextPitEntry,
@@ -36,8 +38,15 @@ export default function CircuitSandbox({
   onSaved: () => void;
   active: boolean;
 }) {
-  const [setup, setSetup] = useState(() => readSandbox(track));
+  const [setup, setSetup] = useState(() => {
+    const current=readSandbox(track);
+    try {if(localStorage.getItem(sandboxKey(track.id))!==null)return current;}catch{return current;}
+    const saved=readTeam();
+    return saved.warning?current:availableLineup(saved.team,current);
+  });
+  const [signed, setSigned] = useState(readTeam);
   const [showRoom, setShowRoom] = useState(false);
+  const [showRecruitment, setShowRecruitment] = useState(false);
   const [session, setSession] = useState(() => ({
     states: initialGrid(setup.drivers), elapsed: 0,
   }));
@@ -54,6 +63,12 @@ export default function CircuitSandbox({
   const geometry = useMemo(() => sandboxGeometry(track, setup), [track, setup]);
   const errors = useMemo(() => validateSandbox(track, setup), [track, setup]),
     valid = !errors.length;
+  useEffect(() => {
+    const refresh=()=>setSigned(readTeam());
+    const storage=(e: StorageEvent)=>{if(e.key===teamKey||e.key===null)refresh();};
+    refresh();window.addEventListener(teamUpdatedEvent,refresh);window.addEventListener("storage",storage);window.addEventListener("focus",refresh);
+    return ()=>{window.removeEventListener(teamUpdatedEvent,refresh);window.removeEventListener("storage",storage);window.removeEventListener("focus",refresh);};
+  }, [active]);
   useEffect(() => {
     if (!active || !running || !valid || complete) return;
     let frame = 0,
@@ -130,7 +145,17 @@ export default function CircuitSandbox({
         </p>
       </div>
       <button className="save-button" onClick={() => {setRunning(false);setShowRoom(true);}}>Host this setup with friends</button>
+      <button className="lab-button" onClick={() => {setRunning(false);setShowRecruitment(true);}}>Recruit and manage drivers</button>
+      {showRecruitment && <Suspense fallback={<p role="status">Loading recruitment…</p>}><DriverRecruitment setup={setup} onApply={change} onClose={() => setShowRecruitment(false)} /></Suspense>}
       {showRoom && <Suspense fallback={<p role="status">Loading multiplayer…</p>}><MultiplayerRooms initialTrack={track} initialSetup={setup} onClose={() => setShowRoom(false)} /></Suspense>}
+      <section className="sandbox-drivers" aria-label="Synced signed drivers">
+        <h3>Signed team drivers · {signed.team.roster.length} available</h3>
+        <p className="lab-note">Your signed roster updates here automatically. New unsaved grids use your selected team seats. Existing grids and running races change only when you apply a signed build or sync the lineup; doing so restarts this local run.</p>
+        {signed.warning && <p className="lab-note">Could not load the signed roster. Open recruitment to recover it; your current grid stays available.</p>}
+        <button className="lab-button" disabled={!!signed.warning || !signed.team.lineup.some(id=>id!==null)} onClick={()=>{
+          change(availableLineup(signed.team,setup));setMessage("Selected signed drivers synced to the grid. Local run restarted; save setup to retain this grid.");
+        }}>Sync team lineup and restart</button>
+      </section>
       <div className="sandbox-controls">
         <label className="lab-field">
           Race distance (laps)
@@ -548,6 +573,11 @@ export default function CircuitSandbox({
         {setup.drivers.map((d, i) => (
           <fieldset key={d.id}>
             <legend>Grid slot {i + 1}</legend>
+            <label className="lab-field">Signed driver
+              <select aria-label={`Signed driver for grid ${i+1}`} value="" disabled={!!signed.warning || !signed.team.roster.length} onChange={e=>{
+                if(e.target.value)change(assignRecruitToGrid(signed.team,setup,i,e.target.value));
+              }}><option value="">Choose signed build…</option>{signed.team.roster.map(profile=><option key={profile.id} value={profile.id}>{profile.name}</option>)}</select>
+            </label>
             <label className="lab-field">
               Name
               <input

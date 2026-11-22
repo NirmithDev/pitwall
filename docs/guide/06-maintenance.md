@@ -16,6 +16,8 @@
 | Replay bookmarks | Database, shared by visitors to that instance | API memory | Not private browser/account data |
 | Theme/default map/named map layouts | Browser only | Browser only | Hostname + port + scheme + browser/profile |
 | Saved circuits/sandbox setups/strategy scenarios | Browser only | Browser only | Same origin isolation |
+| Recruiting roster/market/lineup/credits | Browser only, autosaved on successful transactions | Browser only | Same origin; separate from server rooms and guest ownership |
+| Local championship/results/race checkpoint | Browser only | Browser only | One cup per origin; independent of recruiting credits and server rooms |
 | Unsaved drafts, tool selections, simulation clock | Current page/tool session | Current page/tool session | Not automatically restored |
 | Multiplayer rooms/shared race clock | API process memory; lost on restart | API process memory; lost on restart | Guest credential in tab session storage, no token in invitation |
 | Exported files | Download location you choose | Download location you choose | Not automatically re-imported |

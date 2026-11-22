@@ -45,7 +45,7 @@ app.MapPost("/api/rooms/{code}/join", (string code, RoomJoinInput input, RaceRoo
 
 app.MapGet("/health", async (RaceStore data, CancellationToken ct) =>
     await data.ReadyAsync(ct) ? Results.Ok(new { status = "healthy", storage = data.Storage }) : Results.StatusCode(503));
-app.MapGet("/api/status", (RaceStore data) => new { storage = data.Storage, bookmarkScope = "shared-local-development", version = "1.3.0" });
+app.MapGet("/api/status", (RaceStore data) => new { storage = data.Storage, bookmarkScope = "shared-local-development", version = typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "unknown" });
 app.MapGet("/api/sessions", async (RaceCatalog catalog, RaceStore store, CancellationToken ct) => {
     var cached = await store.CachedIdsAsync(ct);
     return Results.Ok(new { catalog.Current.RefreshedAt, catalog.Refreshing, catalog.LastError, sessions = catalog.Current.Sessions.Select(s => new { s.Id, s.SessionKey, s.Title, s.Circuit, s.Country, s.CountryCode, s.Year, s.Date, s.Kind, cached = cached.Contains(s.Id) }) });

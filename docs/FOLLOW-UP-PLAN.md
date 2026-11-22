@@ -49,6 +49,12 @@ The first v1.4 increment implements finite fictional sessions (1–50 laps), det
 
 The private-room increment adds a server-owned C# simulation, SignalR guest connections, exclusive driver claims/readiness, shared host controls, live calls, spectator support, reconnect and explicit driver/host handover. See [multiplayer flows](guide/07-multiplayer.md). Room storage is in memory, independent of PostgreSQL; public hosting, durable room recovery and multiple-instance coordination remain future scope.
 
+Fictional recruiting now adds generated prospects/fees, a browser-local budget and six-driver roster, custom stat allocation and two selected/swappable builds. Applying a lineup copies bounded pace/service values into the local sandbox and future room definitions. See [recruitment](guide/08-driver-recruitment.md). Training, wages, seasons, protected server economies and car-part upgrades remain future scope.
+
+Roster/venue integration now fills empty team seats on signing, keeps signed choices current in an open sandbox, applies selected profiles to new unsaved grids and supports explicit partial sync/per-slot swaps without silently resetting active runs. **Race this circuit** prepares the open replay's approximate outline as a validated independent race venue, with a generated connected pit route and the selected signed drivers. Historical results remain separate; public hosting and a protected cross-device team economy are still later work.
+
+The next local-career increment implements a three-round championship using saved/custom and cached replay venues, two frozen signed builds plus four rivals, exact classified results, points/countback, team totals and saved race checkpoints. See [championship flows](guide/09-championship.md). Next: integrate carefully bounded prize credits, then capped driver training, then consider multiplayer championships. The current cup does not change recruiting credits.
+
 ## Branch and validation workflow
 
 Use a focused feature branch for each milestone, run timing/camera unit tests and browser tests, and review into `develop`. Promote to `master` once the integration branch is ready. Container delivery continues through the existing GitHub Actions workflow.

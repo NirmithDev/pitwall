@@ -1,8 +1,8 @@
-# Pitwall v1.3 — Race Replay Lab
+# Pitwall v1.4 — Race Replay Lab
 
 An independent motorsport replay prototype built with React, TypeScript, ASP.NET Core 10, and PostgreSQL 17. Start with recorded races; later, branch into player-controlled strategy simulations.
 
-[Complete user guide](docs/USER-GUIDE.md) · [Three-minute demo](docs/DEMO.md) · [v1.3 release notes](docs/V1.3.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/FOLLOW-UP-PLAN.md)
+[Complete user guide](docs/USER-GUIDE.md) · [Three-minute demo](docs/DEMO.md) · [v1.4 release notes](docs/V1.4.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/FOLLOW-UP-PLAN.md)
 
 The [handbook](docs/USER-GUIDE.md) documents every current user flow: steps, defaults, saved data, exports, resets and recovery. For future upgrades, follow [CONTRIBUTING](CONTRIBUTING.md) and update the affected flows alongside the implementation. CI checks the registry, links, required sections, UI component coverage and product version.
 
@@ -26,6 +26,9 @@ The [handbook](docs/USER-GUIDE.md) documents every current user flow: steps, def
 - A circuit race sandbox with editable connected pit lanes, one to six named/coloured drivers, individual pace, scheduled service stops, a simulated running order and browser-saved setups.
 - Finite 1–50 lap fictional races with exact finish times/results, plus selected-driver live pit calls, cancellation before entry and repeat visits. See [race sessions](docs/guide/05-race-sandbox.md#sandbox-08).
 - Private multiplayer rooms with a C#-owned simulation clock, SignalR snapshots, guest driver claims/readiness, host controls, live pit calls, reconnect, spectator support, guest removal and driver/host handover. Rooms are temporary and use one API instance. See [the multiplayer guide](docs/guide/07-multiplayer.md).
+- Fictional driver recruitment: generated stat-based prospects, a 12,000-credit budget, six-driver roster, custom 210-point builds, two swappable race seats, browser persistence and lineup application to local/new multiplayer races. See [recruiting flows](docs/guide/08-driver-recruitment.md).
+- Live signed-roster availability in the sandbox, per-slot build selection and partial-lineup sync. **Race this circuit** starts a separate fictional race on the current replay's approximate outline with your selected signed drivers; generated pit lanes are validated before use.
+- A local three-race championship with a frozen signed lineup and four rivals, saved calendar/results, points/countback, team score and resumable in-race checkpoints. Entry is free; recruiting prizes/training and multiplayer championships remain future increments. See [championship flows](docs/guide/09-championship.md).
 - On-demand tool bundles, recovery from tool download failures, indexed replay lookups, a read-only setup doctor, and a one-command local preview.
 - Light/dark themes with a header toggle, system preference on first visit, and a browser-saved choice across races.
 - Save, revisit, and delete replay moments. Bookmarks are isolated by race and survive API restarts in PostgreSQL.
